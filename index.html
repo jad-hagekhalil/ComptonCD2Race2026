@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Compton Council District 2, 2026</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+/* Layout: a campaign "war room" atlas — map as the hero, a pinned precinct dossier beside it, linked analysis below. */
+:root{
+  --bg:#f3f1ec; --surface:#fbfaf7; --ink:#17191c; --muted:#5d6168; --faint:#8b8f96; --line:#d9d5cc; --line-strong:#b9b3a7;
+  --context:#e4e0d7; --nodata:#ebe8e1;
+  --cA:#0e7c6b; --cB:#d4602a; --cC:#7a4fc7; --mid:#f2efe6;
+  --ip:#3156c8; --mail:#c7951c;
+  --focus:#17191c; --chip:#ece8df;
+  --f-display:"Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --f-body:"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141518; --surface:#1c1e22; --ink:#ecebe7; --muted:#a6a8ad; --faint:#7d8087; --line:#2e3137; --line-strong:#454951;
+  --context:#26292e; --nodata:#23262b; --mid:#2b2d31; --chip:#26282d; --focus:#ffffff;
+  --cA:#2bb39b; --cB:#f0844e; --cC:#a98af0; --ip:#6f8ff0; --mail:#e3b443; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141518; --surface:#1c1e22; --ink:#ecebe7; --muted:#a6a8ad; --faint:#7d8087; --line:#2e3137; --line-strong:#454951;
+  --context:#26292e; --nodata:#23262b; --mid:#2b2d31; --chip:#26282d; --focus:#ffffff;
+  --cA:#2bb39b; --cB:#f0844e; --cC:#a98af0; --ip:#6f8ff0; --mail:#e3b443; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-block:20px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(2rem,4.6vw,3.3rem);font-weight:800;line-height:1}
+h2{font-size:1.45rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:700}
+p{margin:0;max-width:70ch}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.84rem}
+header{display:flex;flex-direction:column;gap:14px}
+.head-row{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:flex-end;justify-content:space-between}
+.lede{font-size:1.05rem;color:var(--muted);max-width:64ch}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{appearance:none;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 16px;font:600 .92rem var(--f-body);cursor:pointer;display:flex;gap:10px;align-items:baseline}
+.tab small{font:500 .78rem var(--f-mono);color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab[aria-selected="true"] small{color:inherit;opacity:.75}
+.tab:focus-visible,.seg button:focus-visible,select:focus-visible,.chipbtn:focus-visible,th button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.note{border-left:3px solid var(--mail);padding:6px 0 6px 12px;font-size:.88rem;color:var(--muted);max-width:none}
+/* scoreboard */
+.score{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.cand{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.cand .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.cand .nm{font-weight:600;display:flex;gap:8px;align-items:center}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.cand .pct{font-family:var(--f-display);font-weight:800;font-size:1.9rem;line-height:1}
+.split{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--chip)}
+.split span{display:block;height:100%}
+.cand .sub{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);font-family:var(--f-mono)}
+.stat{background:transparent;border:1px dashed var(--line-strong)}
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+.ctl{display:flex;flex-direction:column;gap:4px}
+.ctl label,.ctl .lab{font:500 .72rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--ink);padding:7px 12px;font:500 .86rem var(--f-body);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+select{font:500 .88rem var(--f-body);color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;max-width:100%}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--ink);width:16px;height:16px}
+/* main grid */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:900px){.stage{grid-template-columns:minmax(0,1fr)}}
+.mapcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.maps{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.maps.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:620px){.maps.two{grid-template-columns:minmax(0,1fr)}}
+.mapbox{position:relative;min-width:0}
+.mapbox .cap{font:600 .78rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.mapbox svg{display:block;width:100%;height:auto;touch-action:manipulation}
+path.pc{stroke:var(--surface);stroke-width:1;cursor:pointer;transition:opacity .15s}
+path.ctx{fill:var(--context);stroke:var(--surface);stroke-width:1}
+path.pc.hl{stroke:var(--focus);stroke-width:2.4}
+path.pc.dim{opacity:.35}
+path.d2line{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-dasharray:4 3;pointer-events:none}
+text.plab{font:500 9.5px var(--f-mono);fill:var(--ink);paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round;pointer-events:none;text-anchor:middle}
+circle.bub{stroke:var(--surface);stroke-width:1.2;cursor:pointer}
+circle.bub.hl{stroke:var(--focus);stroke-width:2.4}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:.8rem;color:var(--muted)}
+.legend svg{display:block}
+.legend .lt{font-family:var(--f-mono);font-size:.74rem}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 6px 20px rgba(0,0,0,.14);border-radius:8px;padding:8px 10px;font-size:.8rem;line-height:1.4;z-index:20;min-width:150px;max-width:240px}
+.tip b{font-family:var(--f-mono)}
+/* dossier */
+.dossier{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;position:sticky;top:max(12px,env(safe-area-inset-top,0px));min-width:0}
+@media (max-width:900px){.dossier{position:static}}
+.dossier .dh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font:500 .72rem var(--f-mono);background:var(--chip);border-radius:4px;padding:2px 6px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kv div{display:flex;flex-direction:column}
+.kv b{font-family:var(--f-display);font-size:1.25rem;font-weight:700;line-height:1.1}
+.kv span{font-size:.72rem;color:var(--muted);font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.04em}
+.bars{display:flex;flex-direction:column;gap:9px}
+.brow{display:grid;grid-template-columns:76px minmax(0,1fr) 46px;gap:8px;align-items:center;font-size:.8rem}
+.brow .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btrack{display:flex;flex-direction:column;gap:3px}
+.bline{height:7px;border-radius:3px;background:var(--chip);position:relative;overflow:hidden}
+.bline i{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.bvals{font-family:var(--f-mono);font-size:.74rem;text-align:right;line-height:1.25}
+.demo{display:flex;flex-direction:column;gap:6px}
+.drow{display:grid;grid-template-columns:110px minmax(0,1fr) 62px;gap:8px;align-items:center;font-size:.8rem}
+.drow .bline{height:6px}
+.drow .avg{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.6}
+.hint{font-size:.82rem;color:var(--muted)}
+.unpin{appearance:none;border:1px solid var(--line-strong);background:transparent;color:var(--ink);border-radius:6px;padding:3px 8px;font:500 .74rem var(--f-mono);cursor:pointer}
+/* analysis */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:900px){.duo{grid-template-columns:minmax(0,1fr)}}
+.chart{position:relative;min-width:0}
+.chart svg{display:block;width:100%;height:auto}
+.axis text{font:400 10.5px var(--f-mono);fill:var(--muted)}
+.axis path,.axis line{stroke:var(--line-strong)}
+.grid line{stroke:var(--line)}
+circle.pt{stroke:var(--surface);stroke-width:1;cursor:pointer}
+circle.pt.hl{stroke:var(--focus);stroke-width:2.2}
+.rbadge{font-family:var(--f-mono);font-size:.82rem;background:var(--chip);border-radius:6px;padding:4px 8px;display:inline-block}
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}
+.find{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.find .k{font:600 .72rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
+.find p{font-size:.9rem}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.8rem;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
+th{font:500 .72rem var(--f-mono);letter-spacing:.03em;color:var(--muted);text-transform:uppercase}
+th button{appearance:none;background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0;text-transform:inherit;letter-spacing:inherit}
+th button[data-dir]::after{content:attr(data-dir);margin-left:3px}
+tbody tr{cursor:pointer}
+tbody tr:hover td,tbody tr.hl td{background:var(--chip)}
+td .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+details summary{cursor:pointer;font-weight:600}
+details[open]>div{margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:.88rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">LA County · General Election · Nov 3, 2026 · Registrar precinct report, Nov 4 count</div>
+    <div class="head-row">
+      <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+        <h1>Compton Council District 2</h1>
+        <p class="lede">Anthony Perry vs. Bennie Tinson, precinct by precinct. Switch between in-person and mail ballots, change what the map is colored by, and tap any precinct for its full results and neighborhood profile.</p>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Race" id="tabs" hidden></div>
+    </div>
+    <p class="note">This is the county's day-after count. Mail ballots that arrived later and provisional ballots are not included yet, so totals and turnout will rise. "In-person" means ballots cast at a vote center, which includes the early vote-center days as well as Election Day. "Mail" means mailed and drop-box ballots.</p>
+  </header>
+
+  <section class="score" id="score" aria-label="Race totals"></section>
+
+  <section class="stage">
+    <div class="mapcard">
+      <div class="controls">
+        <div class="ctl"><span class="lab" id="lab-mode">Ballots</span>
+          <div class="seg" role="group" aria-labelledby="lab-mode" id="seg-mode">
+            <button data-v="all" aria-pressed="true">All</button>
+            <button data-v="ip" aria-pressed="false">In-person</button>
+            <button data-v="mail" aria-pressed="false">Mail</button>
+            <button data-v="split" aria-pressed="false">Side by side</button>
+          </div>
+        </div>
+        <div class="ctl"><label for="sel-lens">Color the map by</label>
+          <select id="sel-lens"></select>
+        </div>
+        <div class="ctl" id="ctl-cand" hidden><label for="sel-cand">Candidate</label>
+          <select id="sel-cand"></select>
+        </div>
+        <div class="ctl"><span class="lab">View</span>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;padding-top:4px">
+            <label class="toggle"><input type="checkbox" id="chk-bub"> Size by ballots</label>
+            <label class="toggle"><input type="checkbox" id="chk-lab" checked> Labels</label>
+          </div>
+        </div>
+      </div>
+      <div class="maps" id="maps"></div>
+      <div class="legend" id="legend"></div>
+      <p class="small muted" id="mapnote"></p>
+    </div>
+    <aside class="dossier" id="dossier" aria-live="polite"></aside>
+  </section>
+
+  <section class="duo">
+    <div class="panel" id="p-split">
+      <h2>Did mail and in-person voters agree?</h2>
+      <p class="small muted" id="split-desc"></p>
+      <div class="chart" id="ch-split"></div>
+    </div>
+    <div class="panel" id="p-demo">
+      <h2>Demographic lens</h2>
+      <div class="controls">
+        <div class="ctl"><label for="sel-dx">Neighborhood trait</label><select id="sel-dx"></select></div>
+        <div class="ctl"><label for="sel-dy">Against</label><select id="sel-dy"></select></div>
+      </div>
+      <div><span class="rbadge" id="rbadge">—</span> <span class="small muted" id="rtext"></span></div>
+      <div class="chart" id="ch-demo"></div>
+      <p class="small muted">Each dot is a precinct, sized by registered voters. The line is a fit weighted by registration. Demographics describe all residents of the surrounding census tracts, including children and non-citizens, so they are not a profile of the voters.</p>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2>What stands out</h2>
+    <div class="findings" id="find-d2">
+      <div class="find"><span class="k" style="color:var(--ip)">Two electorates</span><p>Perry won in-person ballots by 211 votes. Tinson won mail ballots by 29. Perry won the vote-center vote in all seven precincts, while Tinson won the mail vote in three.</p></div>
+      <div class="find"><span class="k" style="color:var(--cB)">East vs. west</span><p>Tinson's three precincts (1450017A, 1450149A, 1450055A) sit on the east and north side of the district. Perry's base is the central core: 1450006A, 1450013A and 1450008A.</p></div>
+      <div class="find"><span class="k" style="color:var(--cA)">Perry's renters</span><p>Perry's in-person margin was largest in lower-income, renter-heavy precincts (r ≈ −0.83 with median income and −0.88 with homeownership). With only seven precincts, treat this as a strong lead, not a proof.</p></div>
+      <div class="find"><span class="k" style="color:var(--mail)">Late ballots</span><p>Late mail ballots are the only thing that can move this race, and so far mail has favored Tinson by just 1.9 points. Watch 1450017A, where he won mail ballots by 63 votes.</p></div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2>Every precinct</h2>
+    <p class="small muted">Click a column to sort. Click a row to pin that precinct on the map.</p>
+    <div class="tblwrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <details>
+    <summary>Sources and method</summary>
+    <div>
+      <p>Results come from the LA County Registrar-Recorder's precinct report for contest cc10769 (Compton City Council District 2), generated Nov 4, 2026. "In-person" is the report's Polling Place row and "Mail" is its VBM Portion row.</p>
+      <p>Precinct boundaries come from the Registrar's election-precinct layer on the LA County GIS portal, lightly simplified for the web. Compton precincts outside District 2 are drawn in gray for context.</p>
+      <p>Demographics are American Community Survey 5-year tract estimates (Esri Living Atlas): race and ethnicity (B03002), median household income (B19049) and owner vs. renter households (B25091/B25070). Each election precinct takes the average profile of the Registrar base precincts inside it, using each base precinct's 2020 census tract. These are neighborhood estimates. Precincts in the same tract look alike, and they describe residents rather than voters.</p>
+      <p>Correlations (r) are weighted by registered voters. With 5 to 25 precincts, they show patterns worth testing against the voter file, not causes.</p>
+    </div>
+  </details>
+</div>
+
+<script id="atlas-data" type="application/json">{"races":{"d2":{"city":"compton","title":"Compton Council District 2","voteFor":1,"cands":[["Anthony Perry","Perry"],["Bennie Tinson","Tinson"]],"p":{"1450006A":{"reg":1236,"grp":806,"vbmOnly":true,"ip":[141,78,51],"mail":[156,84,55],"all":[297,162,106]},"1450008A":{"reg":2417,"grp":804,"vbmOnly":false,"ip":[237,135,82],"mail":[365,188,152],"all":[602,323,234]},"1450013A":{"reg":887,"grp":806,"vbmOnly":true,"ip":[103,62,34],"mail":[151,83,54],"all":[254,145,88]},"1450017A":{"reg":3854,"grp":803,"vbmOnly":false,"ip":[402,209,156],"mail":[607,259,322],"all":[1009,468,478]},"1450055A":{"reg":1345,"grp":804,"vbmOnly":true,"ip":[138,81,49],"mail":[186,68,107],"all":[324,149,156]},"1450149A":{"reg":788,"grp":803,"vbmOnly":true,"ip":[98,48,38],"mail":[115,40,63],"all":[213,88,101]},"1450305B":{"reg":449,"grp":805,"vbmOnly":true,"ip":[52,29,21],"mail":[74,36,34],"all":[126,65,55]}}}},"geo":{"compton":{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"precinct":"1450006A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2114,33.8961],[-118.2128,33.8961],[-118.2128,33.8978],[-118.2128,33.8984],[-118.2128,33.9001],[-118.2128,33.9007],[-118.2128,33.9035],[-118.2121,33.9035],[-118.2107,33.9035],[-118.21,33.9035],[-118.2087,33.9035],[-118.2073,33.9035],[-118.2073,33.9018],[-118.2066,33.9012],[-118.2066,33.9007],[-118.2066,33.8995],[-118.2066,33.8984],[-118.2066,33.8961],[-118.2073,33.8961],[-118.208,33.8961],[-118.2087,33.8961],[-118.2093,33.8961],[-118.2107,33.8961],[-118.2114,33.8961]]]]}},{"type":"Feature","properties":{"precinct":"1450007B"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2128,33.8888],[-118.2134,33.8888],[-118.2141,33.8888],[-118.2162,33.8888],[-118.2175,33.8888],[-118.2189,33.8888],[-118.2196,33.8888],[-118.2203,33.8888],[-118.2216,33.8888],[-118.2237,33.8888],[-118.2244,33.8888],[-118.2257,33.8888],[-118.2264,33.8893],[-118.2264,33.8899],[-118.2264,33.891],[-118.2264,33.8922],[-118.2264,33.8933],[-118.2264,33.8944],[-118.2264,33.895],[-118.2264,33.8961],[-118.225,33.8961],[-118.2244,33.8961],[-118.2237,33.8961],[-118.2223,33.8961],[-118.2203,33.8961],[-118.2196,33.8961],[-118.2189,33.8961],[-118.2182,33.8961],[-118.2182,33.8984],[-118.2182,33.9007],[-118.2182,33.9035],[-118.2175,33.9035],[-118.2169,33.9035],[-118.2162,33.9035],[-118.2155,33.9035],[-118.2148,33.9035],[-118.2141,33.9007],[-118.2141,33.9001],[-118.2141,33.8984],[-118.2141,33.8978],[-118.2134,33.8961],[-118.2128,33.8961],[-118.2128,33.8944],[-118.2121,33.8922],[-118.2121,33.8905],[-118.2121,33.8888],[-118.2128,33.8888]]]]}},{"type":"Feature","properties":{"precinct":"1450007D"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2128,33.8984],[-118.2128,33.8978],[-118.2128,33.8961],[-118.2134,33.8961],[-118.2141,33.8978],[-118.2141,33.8984],[-118.2141,33.9001],[-118.2141,33.9007],[-118.2148,33.9035],[-118.2134,33.9035],[-118.2128,33.9035],[-118.2128,33.9007],[-118.2128,33.9001],[-118.2128,33.8984]]]]}},{"type":"Feature","properties":{"precinct":"1450008A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.225,33.9035],[-118.225,33.9041],[-118.225,33.9046],[-118.2257,33.9046],[-118.2257,33.9052],[-118.2264,33.9063],[-118.2264,33.9069],[-118.2271,33.908],[-118.2271,33.9086],[-118.225,33.9092],[-118.223,33.9086],[-118.2223,33.9086],[-118.2223,33.9092],[-118.2223,33.9097],[-118.2223,33.9109],[-118.223,33.9114],[-118.223,33.9137],[-118.2237,33.916],[-118.2237,33.9199],[-118.2244,33.9199],[-118.225,33.9199],[-118.2257,33.9199],[-118.2264,33.9199],[-118.2271,33.9199],[-118.2278,33.9199],[-118.2285,33.9199],[-118.2285,33.9216],[-118.2285,33.9222],[-118.2291,33.9228],[-118.2271,33.9228],[-118.2264,33.9228],[-118.2257,33.9228],[-118.225,33.9233],[-118.2244,33.9233],[-118.2244,33.9228],[-118.2244,33.9222],[-118.2237,33.9222],[-118.223,33.9222],[-118.2223,33.9222],[-118.2216,33.9222],[-118.221,33.9222],[-118.2203,33.9222],[-118.2203,33.9228],[-118.2196,33.9228],[-118.2196,33.9222],[-118.2189,33.9222],[-118.2189,33.9216],[-118.2182,33.9216],[-118.2182,33.9211],[-118.2182,33.9205],[-118.2182,33.9199],[-118.2182,33.9194],[-118.2182,33.9188],[-118.2175,33.9171],[-118.2175,33.9154],[-118.2175,33.9148],[-118.2175,33.9143],[-118.2175,33.9137],[-118.2169,33.9131],[-118.2169,33.9126],[-118.2162,33.9126],[-118.2155,33.9126],[-118.2148,33.9126],[-118.2141,33.9126],[-118.2141,33.912],[-118.2141,33.9114],[-118.2141,33.9109],[-118.2141,33.9097],[-118.2141,33.9092],[-118.2148,33.908],[-118.2141,33.908],[-118.2141,33.9069],[-118.2141,33.9058],[-118.2134,33.9046],[-118.2134,33.9035],[-118.2148,33.9035],[-118.2155,33.9035],[-118.2162,33.9035],[-118.2169,33.9035],[-118.2175,33.9035],[-118.2182,33.9035],[-118.2189,33.9035],[-118.2196,33.9035],[-118.2203,33.9035],[-118.221,33.9035],[-118.2216,33.9035],[-118.2223,33.9035],[-118.223,33.9035],[-118.2244,33.9035],[-118.225,33.9035]]]]}},{"type":"Feature","properties":{"precinct":"1450010A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2585,33.8956],[-118.2592,33.8956],[-118.2592,33.8961],[-118.2585,33.8961],[-118.2585,33.8956]]],[[[-118.2524,33.8956],[-118.253,33.8956],[-118.2544,33.8956],[-118.2551,33.8956],[-118.2558,33.8956],[-118.2565,33.8956],[-118.2571,33.8956],[-118.2578,33.8956],[-118.2585,33.8956],[-118.2578,33.8961],[-118.2571,33.8961],[-118.2565,33.8961],[-118.2524,33.8961],[-118.253,33.8978],[-118.2524,33.8978],[-118.2524,33.8967],[-118.2517,33.8961],[-118.2524,33.8956]]],[[[-118.2592,33.895],[-118.2599,33.895],[-118.2599,33.8956],[-118.2592,33.8956],[-118.2592,33.895]]]]}},{"type":"Feature","properties":{"precinct":"1450013A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2203,33.8961],[-118.2223,33.8961],[-118.2237,33.8961],[-118.2244,33.8961],[-118.2244,33.8973],[-118.2244,33.8978],[-118.2244,33.8995],[-118.2244,33.9007],[-118.2244,33.9012],[-118.225,33.9018],[-118.225,33.9029],[-118.225,33.9035],[-118.2244,33.9035],[-118.223,33.9035],[-118.2223,33.9035],[-118.2216,33.9035],[-118.221,33.9035],[-118.2203,33.9035],[-118.2196,33.9035],[-118.2189,33.9035],[-118.2182,33.9035],[-118.2182,33.9007],[-118.2182,33.8984],[-118.2182,33.8961],[-118.2189,33.8961],[-118.2196,33.8961],[-118.2203,33.8961]]]]}},{"type":"Feature","properties":{"precinct":"1450017A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2005,33.8944],[-118.2012,33.8944],[-118.2025,33.8944],[-118.2025,33.8961],[-118.2032,33.8961],[-118.2039,33.8961],[-118.2046,33.8961],[-118.2052,33.8961],[-118.2066,33.8961],[-118.2066,33.8984],[-118.2066,33.8995],[-118.2066,33.9007],[-118.2066,33.9012],[-118.2073,33.9018],[-118.2073,33.9035],[-118.2073,33.9046],[-118.2073,33.9052],[-118.2073,33.9063],[-118.2073,33.9069],[-118.2073,33.9075],[-118.2073,33.908],[-118.2066,33.9092],[-118.2066,33.9103],[-118.2066,33.9109],[-118.2059,33.912],[-118.2059,33.9126],[-118.2052,33.9126],[-118.2046,33.9126],[-118.2046,33.912],[-118.2039,33.912],[-118.2032,33.912],[-118.2025,33.912],[-118.2025,33.9114],[-118.2018,33.9114],[-118.2012,33.9114],[-118.2005,33.9114],[-118.2005,33.9109],[-118.1998,33.9109],[-118.1991,33.9109],[-118.1984,33.9109],[-118.1984,33.9103],[-118.1991,33.9097],[-118.1991,33.9092],[-118.1991,33.9086],[-118.1991,33.908],[-118.1998,33.908],[-118.1998,33.9075],[-118.1998,33.9069],[-118.1998,33.9063],[-118.2005,33.9063],[-118.2005,33.9041],[-118.1998,33.9041],[-118.1991,33.9041],[-118.1984,33.9041],[-118.1977,33.9041],[-118.1977,33.9035],[-118.1977,33.9029],[-118.1984,33.9029],[-118.1991,33.9029],[-118.1991,33.9024],[-118.1998,33.9024],[-118.1998,33.9018],[-118.1998,33.9012],[-118.1998,33.9007],[-118.1991,33.9007],[-118.1991,33.9001],[-118.1991,33.8995],[-118.1991,33.8984],[-118.1991,33.8973],[-118.1991,33.8961],[-118.1984,33.8961],[-118.1984,33.8956],[-118.1984,33.895],[-118.1984,33.8944],[-118.1991,33.8944],[-118.2005,33.8944]]]]}},{"type":"Feature","properties":{"precinct":"1450019A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2059,33.8905],[-118.2059,33.8893],[-118.2059,33.8888],[-118.2066,33.8888],[-118.2073,33.8888],[-118.2073,33.8893],[-118.2073,33.8899],[-118.2073,33.8905],[-118.2073,33.891],[-118.208,33.891],[-118.208,33.8916],[-118.208,33.8922],[-118.208,33.8939],[-118.208,33.8944],[-118.208,33.8961],[-118.2073,33.8961],[-118.2066,33.8961],[-118.2066,33.895],[-118.2066,33.8944],[-118.2066,33.8939],[-118.2066,33.8922],[-118.2059,33.8905]]]]}},{"type":"Feature","properties":{"precinct":"1450022B"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2141,33.8814],[-118.2148,33.8814],[-118.2155,33.8814],[-118.2155,33.8825],[-118.2155,33.8831],[-118.2155,33.8848],[-118.2162,33.8865],[-118.2162,33.8882],[-118.2162,33.8888],[-118.2141,33.8888],[-118.2134,33.8888],[-118.2128,33.8888],[-118.2121,33.8888],[-118.2121,33.8905],[-118.2121,33.8922],[-118.2128,33.8944],[-118.2128,33.8961],[-118.2114,33.8961],[-118.2107,33.8961],[-118.2093,33.8961],[-118.2087,33.8961],[-118.208,33.8961],[-118.208,33.8944],[-118.208,33.8939],[-118.208,33.8922],[-118.208,33.8916],[-118.208,33.891],[-118.2073,33.891],[-118.2073,33.8905],[-118.2073,33.8899],[-118.2073,33.8893],[-118.2073,33.8888],[-118.2066,33.8876],[-118.2066,33.8871],[-118.2066,33.8865],[-118.2059,33.8848],[-118.2059,33.8837],[-118.2052,33.8831],[-118.2052,33.882],[-118.2046,33.8814],[-118.2052,33.8814],[-118.2073,33.8814],[-118.2087,33.8814],[-118.2093,33.8814],[-118.21,33.8814],[-118.2107,33.8814],[-118.2121,33.8814],[-118.2128,33.8814],[-118.2134,33.8814],[-118.2141,33.8814]]]]}},{"type":"Feature","properties":{"precinct":"1450027A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2414,33.9035],[-118.2421,33.9035],[-118.2421,33.9041],[-118.2421,33.9046],[-118.2428,33.9046],[-118.2428,33.9052],[-118.2435,33.9052],[-118.2435,33.9058],[-118.2442,33.9063],[-118.2442,33.9069],[-118.2448,33.9069],[-118.2448,33.9075],[-118.2455,33.908],[-118.2455,33.9086],[-118.2462,33.9086],[-118.2462,33.9092],[-118.2469,33.9092],[-118.2469,33.9097],[-118.2469,33.9103],[-118.2476,33.9103],[-118.2483,33.9114],[-118.2483,33.912],[-118.2489,33.912],[-118.2489,33.9131],[-118.2489,33.9137],[-118.2489,33.9143],[-118.2489,33.9148],[-118.2496,33.9148],[-118.2496,33.9154],[-118.2496,33.916],[-118.2496,33.9165],[-118.2503,33.9171],[-118.2496,33.9171],[-118.2489,33.9171],[-118.2483,33.9171],[-118.2476,33.9171],[-118.2469,33.9171],[-118.2462,33.9171],[-118.2455,33.9171],[-118.2448,33.9171],[-118.2448,33.9177],[-118.2442,33.9177],[-118.2435,33.9177],[-118.2428,33.9177],[-118.2421,33.9177],[-118.2414,33.9177],[-118.2407,33.9177],[-118.2401,33.9177],[-118.2394,33.9177],[-118.2394,33.916],[-118.2387,33.916],[-118.238,33.916],[-118.238,33.9154],[-118.238,33.9148],[-118.238,33.9143],[-118.2394,33.9143],[-118.2394,33.9137],[-118.2394,33.9131],[-118.2394,33.912],[-118.2394,33.9114],[-118.2394,33.9109],[-118.2394,33.9097],[-118.2394,33.9092],[-118.2394,33.908],[-118.2394,33.9075],[-118.2394,33.9069],[-118.2394,33.9063],[-118.2394,33.9058],[-118.2394,33.9052],[-118.2401,33.9046],[-118.2401,33.9041],[-118.2401,33.9035],[-118.2414,33.9035]]]]}},{"type":"Feature","properties":{"precinct":"1450036B"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2278,33.9035],[-118.2285,33.9035],[-118.2291,33.9035],[-118.2298,33.9035],[-118.2326,33.9035],[-118.2346,33.9035],[-118.236,33.9035],[-118.238,33.9035],[-118.2401,33.9035],[-118.2401,33.9041],[-118.2401,33.9046],[-118.2394,33.9052],[-118.2394,33.9058],[-118.2394,33.9063],[-118.2394,33.9069],[-118.2394,33.9075],[-118.2394,33.908],[-118.2394,33.9092],[-118.2394,33.9097],[-118.2394,33.9109],[-118.2394,33.9114],[-118.2394,33.912],[-118.2394,33.9131],[-118.2394,33.9137],[-118.2394,33.9143],[-118.238,33.9143],[-118.238,33.9137],[-118.2373,33.9137],[-118.2367,33.9137],[-118.236,33.9137],[-118.236,33.9131],[-118.236,33.9126],[-118.236,33.912],[-118.236,33.9114],[-118.236,33.9109],[-118.236,33.9103],[-118.236,33.9097],[-118.236,33.9092],[-118.236,33.9086],[-118.236,33.908],[-118.236,33.9075],[-118.236,33.9069],[-118.236,33.9063],[-118.2353,33.9063],[-118.2346,33.9063],[-118.2339,33.9063],[-118.2339,33.9069],[-118.2332,33.9069],[-118.2326,33.9069],[-118.2319,33.9069],[-118.2319,33.9075],[-118.2312,33.9075],[-118.2305,33.9075],[-118.2298,33.9075],[-118.2291,33.908],[-118.2285,33.908],[-118.2278,33.908],[-118.2271,33.9086],[-118.2271,33.908],[-118.2264,33.9069],[-118.2264,33.9063],[-118.2257,33.9052],[-118.2257,33.9046],[-118.225,33.9046],[-118.225,33.9041],[-118.225,33.9035],[-118.2257,33.9035],[-118.2264,33.9035],[-118.2271,33.9035],[-118.2278,33.9035]]]]}},{"type":"Feature","properties":{"precinct":"1450040A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2428,33.8961],[-118.2442,33.8961],[-118.2462,33.8961],[-118.2469,33.8973],[-118.2469,33.8978],[-118.2469,33.8984],[-118.2469,33.899],[-118.2469,33.9001],[-118.2476,33.9001],[-118.2483,33.9001],[-118.2489,33.9001],[-118.2489,33.9007],[-118.2496,33.9024],[-118.2496,33.9029],[-118.2489,33.9029],[-118.2483,33.9029],[-118.2476,33.9029],[-118.2476,33.9035],[-118.2469,33.9035],[-118.2469,33.9029],[-118.2455,33.9035],[-118.2448,33.9035],[-118.2442,33.9035],[-118.2421,33.9035],[-118.2414,33.9035],[-118.2401,33.9035],[-118.238,33.9035],[-118.236,33.9035],[-118.2346,33.9035],[-118.2326,33.9035],[-118.2326,33.9029],[-118.2326,33.9018],[-118.2319,33.9012],[-118.2319,33.9007],[-118.2319,33.9001],[-118.2319,33.899],[-118.2319,33.8984],[-118.2319,33.8978],[-118.2319,33.8967],[-118.2319,33.8961],[-118.2339,33.8961],[-118.2346,33.8961],[-118.236,33.8961],[-118.2367,33.8961],[-118.2373,33.8961],[-118.2387,33.8961],[-118.2401,33.8961],[-118.2414,33.8961],[-118.2421,33.8961],[-118.2428,33.8961]]]]}},{"type":"Feature","properties":{"precinct":"1450042A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2291,33.8888],[-118.2298,33.8888],[-118.2298,33.8893],[-118.2305,33.8893],[-118.2305,33.8899],[-118.2312,33.8899],[-118.2312,33.8905],[-118.2312,33.891],[-118.2319,33.891],[-118.2319,33.8916],[-118.2326,33.8916],[-118.2326,33.8922],[-118.2326,33.8927],[-118.2332,33.8927],[-118.2332,33.8933],[-118.2339,33.8933],[-118.2339,33.8939],[-118.2346,33.8939],[-118.2346,33.8944],[-118.2353,33.895],[-118.236,33.8956],[-118.236,33.8961],[-118.2346,33.8961],[-118.2339,33.8961],[-118.2319,33.8961],[-118.2319,33.8967],[-118.2319,33.8978],[-118.2319,33.8984],[-118.2319,33.899],[-118.2319,33.9001],[-118.2319,33.9007],[-118.2319,33.9012],[-118.2326,33.9018],[-118.2326,33.9029],[-118.2326,33.9035],[-118.2298,33.9035],[-118.2291,33.9035],[-118.2285,33.9035],[-118.2278,33.9035],[-118.2271,33.9035],[-118.2264,33.9035],[-118.2257,33.9035],[-118.225,33.9035],[-118.225,33.9029],[-118.225,33.9018],[-118.2244,33.9012],[-118.2244,33.9007],[-118.2244,33.8995],[-118.2244,33.8978],[-118.2244,33.8973],[-118.2244,33.8961],[-118.225,33.8961],[-118.2264,33.8961],[-118.2264,33.895],[-118.2264,33.8944],[-118.2264,33.8933],[-118.2264,33.8922],[-118.2264,33.891],[-118.2264,33.8899],[-118.2264,33.8893],[-118.2257,33.8888],[-118.2264,33.8888],[-118.2285,33.8888],[-118.2291,33.8888]]]]}},{"type":"Feature","properties":{"precinct":"1450045A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2605,33.8803],[-118.2612,33.8803],[-118.2612,33.8808],[-118.2612,33.8814],[-118.2605,33.8814],[-118.2605,33.882],[-118.2599,33.882],[-118.2599,33.8825],[-118.2592,33.8825],[-118.2592,33.8831],[-118.2585,33.8831],[-118.2585,33.8837],[-118.2578,33.8837],[-118.2578,33.8842],[-118.2571,33.8842],[-118.2571,33.8848],[-118.2571,33.8854],[-118.2571,33.8859],[-118.2578,33.8859],[-118.2585,33.8859],[-118.2592,33.8859],[-118.2599,33.8854],[-118.2605,33.8854],[-118.2612,33.8854],[-118.2612,33.8859],[-118.2612,33.8865],[-118.2605,33.8865],[-118.2605,33.8871],[-118.2605,33.8876],[-118.2605,33.8882],[-118.2605,33.8888],[-118.2605,33.8893],[-118.2605,33.8899],[-118.2612,33.8899],[-118.2612,33.8905],[-118.2605,33.8905],[-118.2599,33.8905],[-118.2592,33.8905],[-118.2592,33.8916],[-118.2592,33.8922],[-118.2599,33.895],[-118.2592,33.895],[-118.2592,33.8956],[-118.2585,33.8956],[-118.2578,33.8956],[-118.2571,33.8956],[-118.2565,33.8956],[-118.2558,33.8956],[-118.2551,33.8956],[-118.2544,33.8956],[-118.253,33.8956],[-118.2524,33.8956],[-118.2517,33.8961],[-118.2517,33.8956],[-118.2517,33.895],[-118.2517,33.8944],[-118.251,33.8933],[-118.251,33.8927],[-118.251,33.8922],[-118.251,33.891],[-118.2503,33.8905],[-118.2503,33.8899],[-118.2503,33.8893],[-118.2503,33.8882],[-118.2496,33.8871],[-118.2496,33.8865],[-118.2489,33.8848],[-118.2489,33.8831],[-118.2489,33.8825],[-118.2489,33.882],[-118.2537,33.882],[-118.2537,33.8814],[-118.2537,33.8808],[-118.2537,33.8803],[-118.2544,33.8803],[-118.2551,33.8803],[-118.2558,33.8803],[-118.2565,33.8803],[-118.2571,33.8803],[-118.2578,33.8803],[-118.2585,33.8803],[-118.2592,33.8803],[-118.2599,33.8803],[-118.2605,33.8803]]]]}},{"type":"Feature","properties":{"precinct":"1450047A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2455,33.8803],[-118.2462,33.8803],[-118.2476,33.8803],[-118.2483,33.8803],[-118.2489,33.8803],[-118.2489,33.8808],[-118.2489,33.8814],[-118.2489,33.882],[-118.2489,33.8825],[-118.2489,33.8831],[-118.2489,33.8848],[-118.2496,33.8865],[-118.2496,33.8871],[-118.2503,33.8882],[-118.2503,33.8893],[-118.2503,33.8899],[-118.2503,33.8905],[-118.251,33.891],[-118.2503,33.891],[-118.2496,33.891],[-118.2476,33.891],[-118.2462,33.891],[-118.2448,33.891],[-118.2442,33.891],[-118.2435,33.891],[-118.2428,33.891],[-118.2414,33.891],[-118.2394,33.891],[-118.2387,33.891],[-118.2373,33.891],[-118.2373,33.8899],[-118.2373,33.8888],[-118.2373,33.8882],[-118.2373,33.8871],[-118.2367,33.8859],[-118.2367,33.8842],[-118.2367,33.8831],[-118.2367,33.882],[-118.2367,33.8808],[-118.2373,33.8808],[-118.2387,33.8808],[-118.2401,33.8808],[-118.2407,33.8808],[-118.2421,33.8808],[-118.2428,33.8808],[-118.2442,33.8808],[-118.2455,33.8803]]]]}},{"type":"Feature","properties":{"precinct":"1450052A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2476,33.891],[-118.2496,33.891],[-118.2503,33.891],[-118.251,33.891],[-118.251,33.8922],[-118.251,33.8927],[-118.251,33.8933],[-118.2517,33.8944],[-118.2517,33.895],[-118.2517,33.8956],[-118.2517,33.8961],[-118.2524,33.8967],[-118.2524,33.8978],[-118.2524,33.8984],[-118.253,33.9012],[-118.253,33.9018],[-118.2537,33.9018],[-118.2537,33.9024],[-118.2537,33.9029],[-118.253,33.9029],[-118.2524,33.9029],[-118.2517,33.9029],[-118.251,33.9029],[-118.2503,33.9029],[-118.2496,33.9029],[-118.2496,33.9024],[-118.2489,33.9007],[-118.2489,33.9001],[-118.2483,33.9001],[-118.2476,33.9001],[-118.2469,33.9001],[-118.2469,33.899],[-118.2469,33.8984],[-118.2469,33.8978],[-118.2469,33.8973],[-118.2462,33.8961],[-118.2442,33.8961],[-118.2428,33.8961],[-118.2421,33.8961],[-118.2414,33.8961],[-118.2401,33.8961],[-118.2387,33.8961],[-118.2373,33.8961],[-118.2373,33.895],[-118.2373,33.8944],[-118.2373,33.8933],[-118.2373,33.8927],[-118.2373,33.891],[-118.2387,33.891],[-118.2394,33.891],[-118.2414,33.891],[-118.2428,33.891],[-118.2435,33.891],[-118.2442,33.891],[-118.2448,33.891],[-118.2462,33.891],[-118.2476,33.891]]]]}},{"type":"Feature","properties":{"precinct":"1450055A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2093,33.9114],[-118.21,33.9114],[-118.21,33.912],[-118.2093,33.9114]]],[[[-118.2073,33.9035],[-118.2087,33.9035],[-118.21,33.9035],[-118.2107,33.9035],[-118.2121,33.9035],[-118.2128,33.9035],[-118.2134,33.9035],[-118.2134,33.9046],[-118.2141,33.9058],[-118.2141,33.9069],[-118.2141,33.908],[-118.2148,33.908],[-118.2141,33.9092],[-118.2141,33.9097],[-118.2141,33.9109],[-118.2114,33.9097],[-118.21,33.9097],[-118.2093,33.9097],[-118.2093,33.9103],[-118.2093,33.9109],[-118.21,33.9109],[-118.2093,33.9114],[-118.2087,33.9114],[-118.208,33.9109],[-118.2073,33.9109],[-118.2066,33.9109],[-118.2066,33.9103],[-118.2066,33.9092],[-118.2073,33.908],[-118.2073,33.9075],[-118.2073,33.9069],[-118.2073,33.9063],[-118.2073,33.9052],[-118.2073,33.9046],[-118.2073,33.9035]]]]}},{"type":"Feature","properties":{"precinct":"1450113A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.236,33.8808],[-118.2367,33.8808],[-118.2367,33.882],[-118.2367,33.8831],[-118.2367,33.8842],[-118.2367,33.8859],[-118.2373,33.8871],[-118.2373,33.8882],[-118.2373,33.8888],[-118.2373,33.8899],[-118.2373,33.891],[-118.2373,33.8927],[-118.2373,33.8933],[-118.2373,33.8944],[-118.2373,33.895],[-118.2373,33.8961],[-118.2367,33.8961],[-118.236,33.8961],[-118.236,33.8956],[-118.2353,33.895],[-118.2346,33.8944],[-118.2346,33.8939],[-118.2339,33.8939],[-118.2339,33.8933],[-118.2332,33.8933],[-118.2332,33.8927],[-118.2326,33.8927],[-118.2326,33.8922],[-118.2326,33.8916],[-118.2319,33.8916],[-118.2319,33.891],[-118.2312,33.891],[-118.2312,33.8905],[-118.2312,33.8899],[-118.2305,33.8899],[-118.2305,33.8893],[-118.2298,33.8893],[-118.2298,33.8888],[-118.2291,33.8888],[-118.2285,33.8888],[-118.2285,33.8876],[-118.2285,33.8871],[-118.2278,33.8871],[-118.2278,33.8865],[-118.2278,33.8859],[-118.2278,33.8854],[-118.2278,33.8842],[-118.2278,33.8831],[-118.2278,33.8825],[-118.2278,33.8814],[-118.2278,33.8808],[-118.2298,33.8808],[-118.2319,33.8808],[-118.2326,33.8808],[-118.2339,33.8808],[-118.236,33.8808]]]]}},{"type":"Feature","properties":{"precinct":"1450133A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2244,33.8814],[-118.2257,33.8808],[-118.2278,33.8808],[-118.2278,33.8814],[-118.2278,33.8825],[-118.2278,33.8831],[-118.2278,33.8842],[-118.2278,33.8854],[-118.2278,33.8859],[-118.2278,33.8865],[-118.2278,33.8871],[-118.2285,33.8871],[-118.2285,33.8876],[-118.2285,33.8888],[-118.2264,33.8888],[-118.2257,33.8888],[-118.2244,33.8888],[-118.2237,33.8888],[-118.2216,33.8888],[-118.2203,33.8888],[-118.2196,33.8888],[-118.2189,33.8888],[-118.2175,33.8888],[-118.2162,33.8888],[-118.2162,33.8882],[-118.2162,33.8865],[-118.2155,33.8848],[-118.2155,33.8831],[-118.2155,33.8825],[-118.2155,33.8814],[-118.2175,33.8814],[-118.2182,33.8814],[-118.221,33.8814],[-118.2223,33.8814],[-118.223,33.8814],[-118.2237,33.8814],[-118.2244,33.8814]]]]}},{"type":"Feature","properties":{"precinct":"1450141C"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.1882,33.8865],[-118.1882,33.8859],[-118.1882,33.8854],[-118.1875,33.8854],[-118.1875,33.8837],[-118.1875,33.8831],[-118.1882,33.8831],[-118.1889,33.8837],[-118.1889,33.8842],[-118.1895,33.8842],[-118.1902,33.8848],[-118.1902,33.8854],[-118.1895,33.8854],[-118.1895,33.8859],[-118.1889,33.8865],[-118.1882,33.8865]]]]}},{"type":"Feature","properties":{"precinct":"1450142A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2046,33.8814],[-118.2052,33.882],[-118.2052,33.8831],[-118.2059,33.8837],[-118.2059,33.8848],[-118.2066,33.8865],[-118.2066,33.8871],[-118.2066,33.8876],[-118.2073,33.8888],[-118.2066,33.8888],[-118.2059,33.8888],[-118.2059,33.8893],[-118.2059,33.8905],[-118.2066,33.8922],[-118.2066,33.8939],[-118.2066,33.8944],[-118.2066,33.895],[-118.2066,33.8961],[-118.2052,33.8961],[-118.2046,33.8961],[-118.2039,33.8961],[-118.2032,33.8961],[-118.2025,33.8961],[-118.2025,33.8944],[-118.2012,33.8944],[-118.2005,33.8944],[-118.1991,33.8944],[-118.1984,33.8944],[-118.1984,33.8939],[-118.1984,33.8933],[-118.1984,33.8927],[-118.1977,33.8927],[-118.1977,33.8922],[-118.1977,33.8916],[-118.1977,33.891],[-118.1971,33.8905],[-118.1971,33.8893],[-118.1971,33.8888],[-118.1984,33.8888],[-118.1991,33.8888],[-118.2005,33.8888],[-118.2005,33.8882],[-118.2005,33.8876],[-118.2005,33.8871],[-118.2005,33.8865],[-118.2012,33.8865],[-118.2018,33.8865],[-118.2018,33.8882],[-118.2032,33.8882],[-118.2039,33.8882],[-118.2052,33.8882],[-118.2059,33.8882],[-118.2059,33.8876],[-118.2059,33.8871],[-118.2059,33.8859],[-118.2052,33.8848],[-118.2046,33.8831],[-118.2046,33.8825],[-118.2046,33.8814]],[[-118.2018,33.8814],[-118.2018,33.882],[-118.2025,33.882],[-118.2025,33.8814],[-118.2018,33.8814]]]]}},{"type":"Feature","properties":{"precinct":"1450145A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.1943,33.8814],[-118.195,33.8814],[-118.1971,33.8814],[-118.1971,33.882],[-118.1971,33.8825],[-118.1971,33.8831],[-118.1971,33.8837],[-118.1971,33.8842],[-118.1971,33.8848],[-118.1977,33.8848],[-118.1977,33.8865],[-118.1984,33.8882],[-118.1991,33.8882],[-118.1991,33.8888],[-118.1984,33.8888],[-118.1971,33.8888],[-118.1964,33.8888],[-118.1957,33.8888],[-118.195,33.8888],[-118.195,33.8893],[-118.1943,33.8893],[-118.1936,33.8893],[-118.193,33.8893],[-118.1923,33.8893],[-118.1916,33.8893],[-118.1909,33.8893],[-118.1902,33.8893],[-118.1895,33.8893],[-118.1895,33.8899],[-118.1895,33.8905],[-118.1895,33.891],[-118.1895,33.8916],[-118.1895,33.8922],[-118.1895,33.8927],[-118.1895,33.8933],[-118.1895,33.8939],[-118.1895,33.8944],[-118.1902,33.8944],[-118.1902,33.895],[-118.1902,33.8956],[-118.1902,33.8961],[-118.1895,33.8961],[-118.1895,33.8956],[-118.1895,33.895],[-118.1889,33.895],[-118.1882,33.895],[-118.1875,33.895],[-118.1868,33.895],[-118.1861,33.895],[-118.1854,33.895],[-118.1854,33.8956],[-118.1854,33.8961],[-118.1848,33.8961],[-118.1841,33.8961],[-118.1834,33.8961],[-118.1827,33.8961],[-118.182,33.8961],[-118.182,33.8956],[-118.182,33.895],[-118.182,33.8944],[-118.182,33.8939],[-118.182,33.8933],[-118.182,33.8927],[-118.1814,33.8927],[-118.1807,33.8927],[-118.18,33.8927],[-118.18,33.8922],[-118.1814,33.8905],[-118.182,33.8893],[-118.1827,33.8893],[-118.1841,33.8893],[-118.1841,33.8899],[-118.1841,33.8905],[-118.1841,33.891],[-118.1841,33.8927],[-118.1848,33.8927],[-118.1861,33.8927],[-118.1868,33.8927],[-118.1868,33.8922],[-118.1875,33.8893],[-118.1875,33.8888],[-118.1875,33.8882],[-118.1875,33.8876],[-118.1875,33.8871],[-118.1882,33.8865],[-118.1889,33.8865],[-118.1895,33.8859],[-118.1895,33.8854],[-118.1902,33.8854],[-118.1902,33.8848],[-118.1895,33.8842],[-118.1889,33.8842],[-118.1889,33.8837],[-118.1882,33.8831],[-118.1875,33.8831],[-118.1875,33.8825],[-118.1875,33.882],[-118.1882,33.8814],[-118.1889,33.8814],[-118.1895,33.8814],[-118.1902,33.8814],[-118.1909,33.8814],[-118.1916,33.8814],[-118.1936,33.8814],[-118.1943,33.8814]]]]}},{"type":"Feature","properties":{"precinct":"1450149A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.1991,33.9063],[-118.1998,33.9063],[-118.1998,33.9069],[-118.1991,33.9063]]],[[[-118.193,33.9058],[-118.1936,33.9058],[-118.1943,33.9058],[-118.195,33.9058],[-118.1957,33.9058],[-118.1964,33.9058],[-118.1964,33.9063],[-118.1971,33.9063],[-118.1971,33.9069],[-118.1964,33.9075],[-118.1964,33.908],[-118.1964,33.9086],[-118.1957,33.9092],[-118.1957,33.9097],[-118.1957,33.9103],[-118.195,33.9103],[-118.195,33.9109],[-118.195,33.9114],[-118.1943,33.9114],[-118.1936,33.9109],[-118.1943,33.9103],[-118.1943,33.9097],[-118.1943,33.9092],[-118.195,33.9086],[-118.195,33.908],[-118.195,33.9075],[-118.1957,33.9069],[-118.1957,33.9063],[-118.195,33.9063],[-118.1943,33.9063],[-118.1936,33.9063],[-118.193,33.9058]]],[[[-118.1943,33.9029],[-118.195,33.9029],[-118.195,33.9035],[-118.195,33.9041],[-118.1943,33.9041],[-118.1943,33.9035],[-118.1943,33.9029]]],[[[-118.193,33.8984],[-118.1936,33.8984],[-118.1943,33.8984],[-118.1943,33.899],[-118.1943,33.8995],[-118.1943,33.9001],[-118.1936,33.9001],[-118.1936,33.9007],[-118.193,33.9007],[-118.193,33.9001],[-118.193,33.8995],[-118.193,33.899],[-118.193,33.8984]]],[[[-118.1895,33.8961],[-118.1902,33.8961],[-118.1902,33.8967],[-118.1902,33.8973],[-118.1902,33.8978],[-118.1902,33.8984],[-118.1902,33.899],[-118.1902,33.8995],[-118.1902,33.9001],[-118.1902,33.9007],[-118.1916,33.9007],[-118.1916,33.9012],[-118.1916,33.9018],[-118.1916,33.9024],[-118.1916,33.9029],[-118.1923,33.9029],[-118.1923,33.9035],[-118.1916,33.9035],[-118.1916,33.9041],[-118.1909,33.9041],[-118.1909,33.9046],[-118.1909,33.9052],[-118.1909,33.9058],[-118.1902,33.9058],[-118.1902,33.9063],[-118.1895,33.9063],[-118.1895,33.9069],[-118.1895,33.9075],[-118.1889,33.9075],[-118.1882,33.9075],[-118.1875,33.9075],[-118.1875,33.9069],[-118.1868,33.9069],[-118.1868,33.9063],[-118.1868,33.9058],[-118.1875,33.9052],[-118.1882,33.9052],[-118.1889,33.9052],[-118.1889,33.9058],[-118.1895,33.9058],[-118.1895,33.9052],[-118.1895,33.9046],[-118.1895,33.9041],[-118.1895,33.9035],[-118.1889,33.9035],[-118.1882,33.9035],[-118.1875,33.9035],[-118.1875,33.9029],[-118.1882,33.9029],[-118.1889,33.9029],[-118.1895,33.9029],[-118.1895,33.9024],[-118.1889,33.9024],[-118.1889,33.9018],[-118.1895,33.9018],[-118.1895,33.9012],[-118.1895,33.9007],[-118.1895,33.9001],[-118.1895,33.8995],[-118.1895,33.899],[-118.1895,33.8984],[-118.1895,33.8978],[-118.1895,33.8973],[-118.1895,33.8967],[-118.1895,33.8961]]]]}},{"type":"Feature","properties":{"precinct":"1450150A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2421,33.8678],[-118.2428,33.8678],[-118.2428,33.8695],[-118.2442,33.8695],[-118.2448,33.8695],[-118.2455,33.8695],[-118.2462,33.8695],[-118.2469,33.8695],[-118.2476,33.8695],[-118.2489,33.8695],[-118.2489,33.87],[-118.2489,33.8729],[-118.2489,33.8734],[-118.2489,33.874],[-118.2489,33.8751],[-118.2489,33.8757],[-118.2489,33.8769],[-118.2489,33.878],[-118.2489,33.8786],[-118.2489,33.8791],[-118.2476,33.8791],[-118.2476,33.8803],[-118.2462,33.8803],[-118.2455,33.8803],[-118.2442,33.8808],[-118.2428,33.8808],[-118.2421,33.8808],[-118.2407,33.8808],[-118.2401,33.8808],[-118.2387,33.8808],[-118.2373,33.8808],[-118.2367,33.8808],[-118.236,33.8808],[-118.2339,33.8808],[-118.2326,33.8808],[-118.2319,33.8808],[-118.2298,33.8808],[-118.2278,33.8808],[-118.2257,33.8808],[-118.2244,33.8814],[-118.2237,33.8814],[-118.223,33.8814],[-118.2223,33.8814],[-118.221,33.8814],[-118.2182,33.8814],[-118.2175,33.8814],[-118.2155,33.8814],[-118.2148,33.8814],[-118.2141,33.8814],[-118.2134,33.8814],[-118.2128,33.8814],[-118.2121,33.8814],[-118.2107,33.8814],[-118.21,33.8814],[-118.2093,33.8814],[-118.2087,33.8814],[-118.2087,33.8808],[-118.2087,33.8803],[-118.2087,33.8797],[-118.2087,33.8786],[-118.2087,33.8774],[-118.2087,33.8769],[-118.2087,33.8763],[-118.2087,33.8757],[-118.2087,33.8751],[-118.2087,33.8746],[-118.208,33.8746],[-118.208,33.8751],[-118.2073,33.8751],[-118.2073,33.8746],[-118.2059,33.8746],[-118.2052,33.8746],[-118.2052,33.874],[-118.2052,33.8734],[-118.2052,33.8729],[-118.2052,33.8706],[-118.2059,33.8706],[-118.2066,33.8706],[-118.2066,33.8712],[-118.2066,33.8723],[-118.2066,33.8729],[-118.2073,33.8734],[-118.208,33.8734],[-118.2087,33.8734],[-118.2093,33.8734],[-118.2107,33.8734],[-118.2114,33.8734],[-118.2121,33.8734],[-118.2134,33.8734],[-118.2141,33.8734],[-118.2148,33.8734],[-118.2155,33.8734],[-118.2162,33.8734],[-118.2162,33.8729],[-118.2162,33.8723],[-118.2155,33.8717],[-118.2155,33.8706],[-118.2155,33.87],[-118.2155,33.8695],[-118.2162,33.8695],[-118.2196,33.8695],[-118.2196,33.8689],[-118.2196,33.8683],[-118.221,33.8683],[-118.223,33.8683],[-118.2237,33.8683],[-118.2237,33.8689],[-118.2237,33.8706],[-118.2237,33.8712],[-118.2237,33.8717],[-118.225,33.8712],[-118.2257,33.8712],[-118.2271,33.8712],[-118.2285,33.8712],[-118.2291,33.8712],[-118.2305,33.8712],[-118.2312,33.8712],[-118.2312,33.8706],[-118.2312,33.87],[-118.2312,33.8689],[-118.2305,33.8683],[-118.2305,33.8678],[-118.2312,33.8678],[-118.2326,33.8678],[-118.2332,33.8678],[-118.2339,33.8678],[-118.2346,33.8678],[-118.236,33.8678],[-118.2367,33.8678],[-118.2373,33.8678],[-118.2387,33.8678],[-118.2394,33.8678],[-118.2407,33.8678],[-118.2421,33.8678]]]]}},{"type":"Feature","properties":{"precinct":"1450155G"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2237,33.8712],[-118.2237,33.8706],[-118.2237,33.8689],[-118.2237,33.8683],[-118.2257,33.8678],[-118.2257,33.8672],[-118.2257,33.8661],[-118.2264,33.8655],[-118.2264,33.8644],[-118.2264,33.8632],[-118.2278,33.8632],[-118.2285,33.8632],[-118.2291,33.8632],[-118.2298,33.8632],[-118.2305,33.8632],[-118.2305,33.8638],[-118.2305,33.8644],[-118.2312,33.8644],[-118.2319,33.8655],[-118.2319,33.8661],[-118.2319,33.8666],[-118.2332,33.8666],[-118.2339,33.8666],[-118.2339,33.8672],[-118.2346,33.8672],[-118.2353,33.8672],[-118.236,33.8672],[-118.236,33.8678],[-118.2346,33.8678],[-118.2339,33.8678],[-118.2332,33.8678],[-118.2326,33.8678],[-118.2312,33.8678],[-118.2305,33.8678],[-118.2305,33.8683],[-118.2312,33.8689],[-118.2312,33.87],[-118.2312,33.8706],[-118.2312,33.8712],[-118.2305,33.8712],[-118.2291,33.8712],[-118.2285,33.8712],[-118.2271,33.8712],[-118.2257,33.8712],[-118.225,33.8712],[-118.2237,33.8717],[-118.2237,33.8712]]]]}},{"type":"Feature","properties":{"precinct":"1450156A"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2469,33.9029],[-118.2469,33.9035],[-118.2462,33.9035],[-118.2455,33.9035],[-118.2469,33.9029]]],[[[-118.2592,33.9024],[-118.2612,33.9024],[-118.2619,33.9024],[-118.2633,33.9024],[-118.2633,33.9029],[-118.2633,33.9035],[-118.2633,33.9041],[-118.2633,33.9046],[-118.2633,33.9058],[-118.2626,33.9058],[-118.2619,33.9058],[-118.2612,33.9058],[-118.2612,33.908],[-118.2612,33.9086],[-118.2612,33.9092],[-118.2612,33.9097],[-118.2612,33.9103],[-118.2612,33.9109],[-118.2612,33.9114],[-118.2612,33.912],[-118.2612,33.9126],[-118.2605,33.9126],[-118.2599,33.9126],[-118.2592,33.9126],[-118.2585,33.9126],[-118.2578,33.9126],[-118.2571,33.9126],[-118.2565,33.9126],[-118.2558,33.9126],[-118.2551,33.9126],[-118.2544,33.9126],[-118.2544,33.9131],[-118.2544,33.9143],[-118.2544,33.9148],[-118.2544,33.9154],[-118.2544,33.9165],[-118.2544,33.9171],[-118.2537,33.9171],[-118.253,33.9171],[-118.2524,33.9171],[-118.2517,33.9171],[-118.251,33.9171],[-118.2503,33.9171],[-118.2496,33.9165],[-118.2496,33.916],[-118.2496,33.9154],[-118.2496,33.9148],[-118.2489,33.9148],[-118.2489,33.9143],[-118.2489,33.9137],[-118.2489,33.9131],[-118.2489,33.912],[-118.2483,33.912],[-118.2483,33.9114],[-118.2476,33.9103],[-118.2469,33.9103],[-118.2469,33.9097],[-118.2469,33.9092],[-118.2462,33.9092],[-118.2462,33.9086],[-118.2455,33.9086],[-118.2455,33.908],[-118.2448,33.9075],[-118.2448,33.9069],[-118.2442,33.9069],[-118.2442,33.9063],[-118.2435,33.9058],[-118.2435,33.9052],[-118.2428,33.9052],[-118.2428,33.9046],[-118.2421,33.9046],[-118.2421,33.9041],[-118.2421,33.9035],[-118.2442,33.9035],[-118.2448,33.9035],[-118.2455,33.9035],[-118.2455,33.9041],[-118.2455,33.9046],[-118.2455,33.9052],[-118.2455,33.9058],[-118.2455,33.9063],[-118.2462,33.9063],[-118.2469,33.9063],[-118.2476,33.9063],[-118.2483,33.9063],[-118.2489,33.9063],[-118.2496,33.9063],[-118.2503,33.9063],[-118.251,33.9063],[-118.2517,33.9063],[-118.2524,33.9063],[-118.253,33.9063],[-118.2537,33.9063],[-118.2544,33.9063],[-118.2544,33.9058],[-118.2544,33.9052],[-118.2544,33.9046],[-118.2537,33.9029],[-118.2558,33.9029],[-118.2565,33.9029],[-118.2571,33.9029],[-118.2578,33.9029],[-118.2585,33.9029],[-118.2592,33.9024]]]]}},{"type":"Feature","properties":{"precinct":"1450305B"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-118.2093,33.9097],[-118.21,33.9097],[-118.2114,33.9097],[-118.2141,33.9109],[-118.2141,33.9114],[-118.2141,33.912],[-118.2141,33.9126],[-118.2141,33.9131],[-118.2134,33.9131],[-118.2128,33.9131],[-118.2128,33.9126],[-118.2121,33.9126],[-118.2114,33.9126],[-118.2114,33.912],[-118.2107,33.912],[-118.21,33.912],[-118.21,33.9114],[-118.2093,33.9114],[-118.21,33.9109],[-118.2093,33.9109],[-118.2093,33.9103],[-118.2093,33.9097]]]]}}]}},"demo":{"1450006A":{"latino":74.2,"black":17.4,"asian":6.0,"white":0.5,"med_income":63200,"owner":50.7,"tracts":["541605"]},"1450008A":{"latino":90.2,"black":8.2,"asian":0.4,"white":0.5,"med_income":63300,"owner":35.4,"tracts":["541603","541604","542601"]},"1450013A":{"latino":77.8,"black":20.6,"asian":0.0,"white":0.4,"med_income":50200,"owner":29.0,"tracts":["541606","542602"]},"1450017A":{"latino":74.4,"black":22.3,"asian":2.5,"white":0.4,"med_income":88300,"owner":61.4,"tracts":["541605","542000","542103","542105"]},"1450055A":{"latino":88.3,"black":10.0,"asian":0.0,"white":0.2,"med_income":53200,"owner":32.0,"tracts":["541604"]},"1450149A":{"latino":86.6,"black":10.1,"asian":0.5,"white":0.5,"med_income":74400,"owner":55.8,"tracts":["541801","541802","542000","542103","542104"]},"1450305B":{"latino":88.3,"black":10.0,"asian":0.0,"white":0.2,"med_income":53200,"owner":32.0,"tracts":["541604"]}}}</script>
+<script>
+(function(){
+const DATA = JSON.parse(document.getElementById('atlas-data').textContent);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmtI = d3.format(','), fmtP = v => (v==null||!isFinite(v))?'—':v.toFixed(1)+'%';
+const fmtS = v => (v>0?'+':v<0?'−':'')+fmtI(Math.abs(Math.round(v)));
+const fmtPts = v => (v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(1)+' pts';
+const fmt$ = v => '$'+d3.format(',')(Math.round(v/1000))+'k';
+
+const state = { race:'d2', mode:'all', lens:'result', cand:0, bub:false, lab:true, pin:null, hover:null, sort:{k:'reg',dir:-1}, dx:'black', dy:'turnout' };
+try{ const s=JSON.parse(localStorage.getItem('atlas-state-d2')||'{}'); ['mode','lens','cand','bub','lab','dx','dy'].forEach(k=>{ if(s[k]!==undefined) state[k]=s[k]; }); }catch(e){}
+function save(){ try{ localStorage.setItem('atlas-state-d2', JSON.stringify({race:state.race,mode:state.mode,lens:state.lens,cand:state.cand,bub:state.bub,lab:state.lab,dx:state.dx,dy:state.dy})); }catch(e){} }
+
+const MODES = {all:'All ballots', ip:'In-person', mail:'Mail'};
+const candColor = i => css(['--cA','--cB','--cC'][i]);
+
+/* ---------- metrics ---------- */
+const R = () => DATA.races[state.race];
+const two = () => R().voteFor===1;
+function arr(id, m){ return R().p[id][m]; }
+function share(id, m, i){ // two-cand: share of votes; SEM: % of ballots
+  const a = arr(id,m); const r = R();
+  if (r.voteFor===1){ const v=a[1]+a[2]; return v? 100*a[1+i]/v : null; }
+  return a[0]? 100*a[1+i]/a[0] : null;
+}
+function net(id,m){ const a=arr(id,m); return a[1]-a[2]; }
+function turnout(id,m){ const p=R().p[id]; return 100*p[m][0]/p.reg; }
+function mailShare(id){ const p=R().p[id]; return 100*p.mail[0]/p.all[0]; }
+function gap(id){ const c = two()?0:state.cand; return share(id,'mail',c)-share(id,'ip',c); }
+const DEMO = {
+  latino:{label:'Latino residents', f:v=>v.toFixed(0)+'%', unit:'%'},
+  black:{label:'Black residents', f:v=>v.toFixed(0)+'%', unit:'%'},
+  asian:{label:'Asian residents', f:v=>v.toFixed(0)+'%', unit:'%'},
+  white:{label:'White (non-Latino) residents', f:v=>v.toFixed(0)+'%', unit:'%'},
+  med_income:{label:'Median household income', f:fmt$, unit:'$'},
+  owner:{label:'Homeowner households', f:v=>v.toFixed(0)+'%', unit:'%'}
+};
+function lensValue(id, m){
+  switch(state.lens){
+    case 'result': return two()? share(id,m,0) : share(id,m,state.cand);
+    case 'turnout': return turnout(id,m);
+    case 'mailshare': return mailShare(id);
+    case 'gap': return gap(id);
+    default: return DATA.demo[id]? DATA.demo[id][state.lens] : null;
+  }
+}
+const ids = () => Object.keys(R().p);
+function totals(m){ const t=[0,0,0,0]; ids().forEach(id=>arr(id,m).forEach((v,i)=>t[i]+=v)); return t; }
+const regTotal = () => d3.sum(ids(), id=>R().p[id].reg);
+
+/* ---------- tabs ---------- */
+const tabs = d3.select('#tabs');
+Object.entries(DATA.races).forEach(([k,r])=>{
+  const t=[0,0,0,0]; Object.values(r.p).forEach(p=>p.all.forEach((v,i)=>t[i]+=v));
+  let sub; if(r.voteFor===1){ const s=100*t[1]/(t[1]+t[2]); sub = r.cands[0][1]+' '+s.toFixed(1)+'%'; } else { sub = 'Vote for 2'; }
+  const b = tabs.append('button').attr('class','tab').attr('role','tab').attr('id','tab-'+k).attr('data-race',k);
+  b.append('span').text(r.title); b.append('small').text(sub);
+  b.on('click',()=>{ state.race=k; state.pin=null; state.cand = 0; if(k==='sem') state.cand=1; state.dx = k==='sem'?'asian':'black'; renderAll(); });
+});
+
+/* ---------- controls ---------- */
+d3.selectAll('#seg-mode button').on('click',function(){ state.mode=this.dataset.v; renderAll(); });
+d3.select('#sel-lens').on('change',function(){ state.lens=this.value; renderAll(); });
+d3.select('#sel-cand').on('change',function(){ state.cand=+this.value; renderAll(); });
+d3.select('#chk-bub').on('change',function(){ state.bub=this.checked; renderMap(); save(); });
+d3.select('#chk-lab').on('change',function(){ state.lab=this.checked; renderMap(); save(); });
+d3.select('#sel-dx').on('change',function(){ state.dx=this.value; renderDemo(); save(); });
+d3.select('#sel-dy').on('change',function(){ state.dy=this.value; renderDemo(); save(); });
+
+function buildLensOptions(){
+  const sel=d3.select('#sel-lens'); sel.selectAll('*').remove();
+  const g1=sel.append('optgroup').attr('label','Results');
+  g1.append('option').attr('value','result').text(two()? 'Vote share ('+R().cands[0][1]+' vs '+R().cands[1][1]+')' : 'Share of ballots (pick candidate)');
+  g1.append('option').attr('value','gap').text('Mail minus in-person swing');
+  g1.append('option').attr('value','turnout').text('Turnout');
+  g1.append('option').attr('value','mailshare').text('Share of ballots cast by mail');
+  const g2=sel.append('optgroup').attr('label','Neighborhood (Census ACS)');
+  Object.entries(DEMO).forEach(([k,d])=>g2.append('option').attr('value',k).text(d.label));
+  sel.property('value',state.lens);
+  const cs=d3.select('#sel-cand'); cs.selectAll('*').remove();
+  R().cands.forEach((c,i)=>cs.append('option').attr('value',i).text(c[0]));
+  cs.property('value',state.cand);
+  d3.select('#ctl-cand').property('hidden', two() || !(state.lens==='result'||state.lens==='gap'));
+  const dx=d3.select('#sel-dx'); dx.selectAll('*').remove();
+  Object.entries(DEMO).forEach(([k,d])=>dx.append('option').attr('value',k).text(d.label));
+  dx.property('value',state.dx);
+  const dy=d3.select('#sel-dy'); dy.selectAll('*').remove();
+  const ylist = yOptions(); ylist.forEach(o=>dy.append('option').attr('value',o.k).text(o.label));
+  if(!ylist.find(o=>o.k===state.dy)) state.dy='turnout';
+  dy.property('value',state.dy);
+}
+function yOptions(){
+  const c = two()? R().cands[0][1] : R().cands[state.cand][1];
+  const what = two()? ' share' : ' % of ballots';
+  return [
+    {k:'turnout',label:'Turnout', v:id=>turnout(id,'all')},
+    {k:'mailshare',label:'Share of ballots by mail', v:id=>mailShare(id)},
+    {k:'res_all',label:c+what+' (all ballots)', v:id=>share(id,'all',two()?0:state.cand)},
+    {k:'res_ip',label:c+what+' (in-person)', v:id=>share(id,'ip',two()?0:state.cand)},
+    {k:'res_mail',label:c+what+' (mail)', v:id=>share(id,'mail',two()?0:state.cand)},
+  ];
+}
+
+/* ---------- scoreboard ---------- */
+function renderScore(){
+  const r=R(), tA=totals('all'), tI=totals('ip'), tM=totals('mail'), sc=d3.select('#score'); sc.selectAll('*').remove();
+  const denomAll = two()? tA[1]+tA[2] : tA[0];
+  r.cands.forEach((c,i)=>{
+    const card=sc.append('div').attr('class','cand');
+    const top=card.append('div').attr('class','top');
+    const nm=top.append('span').attr('class','nm'); nm.append('span').attr('class','dot').style('background',candColor(i)); nm.append('span').text(c[0]);
+    top.append('span').attr('class','mono small muted').text(fmtI(tA[1+i])+' votes');
+    card.append('div').attr('class','pct').text(fmtP(100*tA[1+i]/denomAll)).append('span').attr('class','small muted').style('font-family','var(--f-body)').style('font-weight','400').style('font-size','.78rem').text(two()?'  of votes':'  of ballots');
+    const sp=card.append('div').attr('class','split').attr('title','In-person votes vs mail votes');
+    sp.append('span').style('width',(100*tI[1+i]/tA[1+i])+'%').style('background','var(--ip)');
+    sp.append('span').style('width',(100*tM[1+i]/tA[1+i])+'%').style('background','var(--mail)');
+    const ipS = two()? 100*tI[1+i]/(tI[1]+tI[2]) : 100*tI[1+i]/tI[0];
+    const mS = two()? 100*tM[1+i]/(tM[1]+tM[2]) : 100*tM[1+i]/tM[0];
+    const sub=card.append('div').attr('class','sub');
+    sub.append('span').html('').text('In-person '+fmtP(ipS));
+    sub.append('span').text('Mail '+fmtP(mS));
+  });
+  const st=sc.append('div').attr('class','cand stat');
+  st.append('div').attr('class','top').append('span').attr('class','nm').text('Turnout so far');
+  st.append('div').attr('class','pct').text(fmtP(100*tA[0]/regTotal()));
+  const sp=st.append('div').attr('class','split');
+  sp.append('span').style('width',(100*tI[0]/tA[0])+'%').style('background','var(--ip)');
+  sp.append('span').style('width',(100*tM[0]/tA[0])+'%').style('background','var(--mail)');
+  const sub=st.append('div').attr('class','sub');
+  sub.append('span').text(fmtI(tA[0])+' of '+fmtI(regTotal()));
+  sub.append('span').text(fmtP(100*tM[0]/tA[0])+' by mail');
+}
+
+/* ---------- color scales ---------- */
+function scaleFor(){
+  const all = ids(); const modes = state.mode==='split'? ['ip','mail'] : [state.mode];
+  const vals = all.flatMap(id=>modes.map(m=>lensValue(id,m))).filter(v=>v!=null&&isFinite(v));
+  const lo=d3.min(vals), hi=d3.max(vals);
+  const mid=css('--mid');
+  if(state.lens==='result' && two()){
+    const d=Math.max(5, d3.max(vals,v=>Math.abs(v-50)));
+    return {kind:'div', s:d3.scaleDiverging([50-d,50,50+d], d3.interpolateRgbBasis([candColor(1),mid,candColor(0)])).clamp(true), dom:[50-d,50,50+d],
+            ticks:[50-d,50,50+d], tf:v=>v===50?'50%':(v>50? R().cands[0][1]+' '+v.toFixed(0)+'%' : R().cands[1][1]+' '+(100-v).toFixed(0)+'%')};
+  }
+  if(state.lens==='gap'){
+    const d=Math.max(3, d3.max(vals,v=>Math.abs(v)));
+    return {kind:'div', s:d3.scaleDiverging([-d,0,d], d3.interpolateRgbBasis([css('--ip'),mid,css('--mail')])).clamp(true), dom:[-d,0,d], ticks:[-d,0,d],
+            tf:v=>v===0?'Even':(v>0?'Better by mail +'+v.toFixed(0):'Better in-person +'+(-v).toFixed(0))};
+  }
+  let col = state.lens==='result'? candColor(state.cand) : state.lens==='turnout'? css('--ip') : state.lens==='mailshare'? css('--mail') : css('--ink');
+  if(['latino','black','asian','white','med_income','owner'].includes(state.lens)) col = css('--cA');
+  const f = DEMO[state.lens]? DEMO[state.lens].f : (v=>v.toFixed(0)+'%');
+  return {kind:'seq', s:d3.scaleSequential([lo,hi], d3.interpolateRgb(mid, col)).clamp(true), dom:[lo,hi], ticks:[lo,hi], tf:f};
+}
+
+/* ---------- map ---------- */
+const tip = d3.select('body').append('div').attr('class','tip').attr('hidden',true);
+function renderMap(){
+  const r=R(), fc=DATA.geo[r.city], maps=d3.select('#maps');
+  maps.selectAll('*').remove();
+  const split = state.mode==='split';
+  maps.classed('two', split);
+  const modes = split? ['ip','mail'] : [state.mode];
+  const sc = scaleFor();
+  const W = Math.max(280, (maps.node().clientWidth || 700) / (split && maps.node().clientWidth>620 ? 2 : 1) - (split?6:0));
+  const inRace0 = new Set(ids());
+  const fitFC = {type:'FeatureCollection', features: fc.features.filter(f=>inRace0.has(f.properties.precinct))};
+  const probe = d3.geoMercator().fitWidth(W-16, fitFC), pb = d3.geoPath(probe).bounds(fitFC);
+  const natH = pb[1][1]-pb[0][1];
+  const maxH = split ? 520 : Math.min(600, Math.max(340, window.innerHeight*0.62));
+  const H = Math.ceil(Math.min(natH, maxH)) + 16;
+  const proj = d3.geoMercator().fitExtent([[8,8],[W-8,H-8]], fitFC);
+  const path = d3.geoPath(proj);
+  const inRace = new Set(ids());
+  const feats = fc.features;
+  const maxB = d3.max(ids().flatMap(id=>['ip','mail','all'].map(m=>arr(id,m)[0])));
+  const rad = d3.scaleSqrt([0,maxB],[0, Math.max(14, W/24)]);
+  modes.forEach(m=>{
+    const box = maps.append('div').attr('class','mapbox');
+    if(split){ const c=box.append('div').attr('class','cap'); c.append('span').attr('class','dot').style('background', m==='ip'?'var(--ip)':'var(--mail)'); c.append('span').text(MODES[m]); }
+    const svg = box.append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('role','img')
+      .attr('aria-label', `${r.title} precinct map, ${MODES[m]}, colored by ${d3.select('#sel-lens option:checked').text()}`);
+    const g = svg.append('g');
+    g.selectAll('path.ctx').data(feats.filter(f=>!inRace.has(f.properties.precinct))).join('path').attr('class','ctx').attr('d',path);
+    const pcs = g.selectAll('path.pc').data(feats.filter(f=>inRace.has(f.properties.precinct))).join('path')
+      .attr('class','pc').attr('d',path).attr('data-id',f=>f.properties.precinct)
+      .attr('tabindex',0).attr('role','button').attr('aria-label',f=>'Precinct '+f.properties.precinct)
+      .style('fill', f=>{ if(state.bub) return css('--context'); const v=lensValue(f.properties.precinct,m); return v==null? css('--nodata') : sc.s(v); });
+    if(state.race==='mayor'){
+      // outline D2 precincts
+      g.selectAll('path.d2line').data(feats.filter(f=>r.p[f.properties.precinct] && r.p[f.properties.precinct].d2)).join('path').attr('class','d2line').attr('d',path);
+    }
+    if(state.bub){
+      const bub = g.selectAll('circle.bub').data(feats.filter(f=>inRace.has(f.properties.precinct)).map(f=>{
+        const id=f.properties.precinct; let c=path.centroid(f.geometry.coordinates.length>1? {type:'Polygon',coordinates:f.geometry.coordinates.reduce((a,p)=>d3.geoArea({type:'Polygon',coordinates:p})>d3.geoArea({type:'Polygon',coordinates:a})?p:a)}:f);
+        return {id, x:c[0], y:c[1], r:rad(arr(id,m)[0])};
+      }).sort((a,b)=>b.r-a.r)).join('circle').attr('class','bub').attr('data-id',d=>d.id)
+        .attr('cx',d=>d.x).attr('cy',d=>d.y).attr('r',d=>d.r)
+        .style('fill',d=>{ const v=lensValue(d.id,m); return v==null? css('--nodata') : sc.s(v); });
+      bindHover(bub, d=>d.id, m, box);
+    }
+    if(state.lab){
+      g.selectAll('text.plab').data(feats.filter(f=>inRace.has(f.properties.precinct) && path.area(f)>260)).join('text').attr('class','plab')
+        .attr('x',f=>{ const big=f.geometry.coordinates.reduce((a,p)=>d3.geoArea({type:'Polygon',coordinates:p})>d3.geoArea({type:'Polygon',coordinates:a})?p:a); return path.centroid({type:'Polygon',coordinates:big})[0]; })
+        .attr('y',f=>{ const big=f.geometry.coordinates.reduce((a,p)=>d3.geoArea({type:'Polygon',coordinates:p})>d3.geoArea({type:'Polygon',coordinates:a})?p:a); return path.centroid({type:'Polygon',coordinates:big})[1]+3; })
+        .text(f=>f.properties.precinct.slice(4));
+    }
+    bindHover(pcs, f=>f.properties.precinct, m, box);
+    // north arrow
+    const na=svg.append('g').attr('transform',`translate(${W-22},22)`);
+    na.append('path').attr('d','M0,-11 L5,4 L0,1 L-5,4 Z').style('fill',css('--ink')).style('opacity',.7);
+    na.append('text').attr('y',15).attr('text-anchor','middle').attr('class','plab').text('N');
+  });
+  renderLegend(sc);
+  const notes = {mayor:'Dashed outlines mark the seven District 2 precincts.', d2:'Gray precincts are the rest of Compton, which had no District 2 race.', sem:'South El Monte has five voting precincts for this contest.'};
+  d3.select('#mapnote').text(notes[state.race] + (state.bub? ' Circle size is ballots cast'+(state.mode==='split'?' by that method':'')+'; circle color follows the map setting.':''));
+  applyHighlight();
+}
+function bindHover(sel, idf, m, box){
+  sel.on('pointerenter pointermove', (ev,d)=>{ const id=idf(d); state.hover=id; showTip(ev,id,m); applyHighlight(); if(!state.pin) renderDossier(id); })
+     .on('pointerleave', ()=>{ state.hover=null; tip.attr('hidden',true); applyHighlight(); if(!state.pin) renderDossier(null); })
+     .on('click', (ev,d)=>{ const id=idf(d); state.pin = state.pin===id? null : id; applyHighlight(); renderDossier(state.pin||id); })
+     .on('keydown', (ev,d)=>{ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); const id=idf(d); state.pin = state.pin===id? null:id; applyHighlight(); renderDossier(state.pin||id);} })
+     .on('focus', (ev,d)=>{ if(!state.pin) renderDossier(idf(d)); });
+}
+function showTip(ev,id,m){
+  const r=R(); const mm = m||'all';
+  tip.attr('hidden',null).selectAll('*').remove();
+  tip.append('b').text(id);
+  tip.append('div').attr('class','muted').text(MODES[mm]+' · '+fmtI(arr(id,mm)[0])+' ballots');
+  if(two()){
+    r.cands.forEach((c,i)=>tip.append('div').html('').call(s=>{ s.append('span').attr('class','dot').style('background',candColor(i)).style('margin-right','6px'); s.append('span').text(c[1]+' '+fmtP(share(id,mm,i))); }));
+    tip.append('div').text('Net '+r.cands[0][1]+' '+fmtS(net(id,mm)));
+  } else {
+    r.cands.forEach((c,i)=>tip.append('div').call(s=>{ s.append('span').attr('class','dot').style('background',candColor(i)).style('margin-right','6px'); s.append('span').text(c[1]+' '+fmtP(share(id,mm,i))+' of ballots'); }));
+  }
+  if(!['result'].includes(state.lens)){ const v=lensValue(id,mm); const lab=d3.select('#sel-lens option:checked').text(); tip.append('div').attr('class','muted').text(lab+': '+(v==null?'—':(DEMO[state.lens]? DEMO[state.lens].f(v) : state.lens==='gap'? fmtPts(v) : fmtP(v)))); }
+  const page = d3.pointer(ev, document.body);
+  const tw = tip.node().offsetWidth, vw = document.documentElement.clientWidth;
+  tip.style('left', Math.max(8, Math.min(vw-tw-8, page[0]+14))+'px').style('top',(page[1]+14)+'px');
+}
+function renderLegend(sc){
+  const L=d3.select('#legend'); L.selectAll('*').remove();
+  const col=L.append('div').style('display','flex').style('flex-direction','column').style('gap','3px');
+  const w=220,h=10; const svg=col.append('svg').attr('width',w).attr('height',h+2).attr('aria-hidden','true');
+  const id='lg'+Math.random().toString(36).slice(2,7);
+  const grad=svg.append('defs').append('linearGradient').attr('id',id);
+  d3.range(0,1.0001,0.1).forEach(t=>{ const v = sc.kind==='div'? (t<.5? sc.dom[0]+(sc.dom[1]-sc.dom[0])*t*2 : sc.dom[1]+(sc.dom[2]-sc.dom[1])*(t-.5)*2) : sc.dom[0]+(sc.dom[1]-sc.dom[0])*t; grad.append('stop').attr('offset',t*100+'%').attr('stop-color',sc.s(v)); });
+  svg.append('rect').attr('width',w).attr('height',h).attr('rx',3).style('fill',`url(#${id})`);
+  const lt=col.append('div').style('display','flex').style('justify-content','space-between').style('gap','12px').style('width',w+'px').attr('class','lt');
+  lt.append('span').text(sc.tf(sc.dom[0])); if(sc.kind==='div') lt.append('span').text(sc.tf(sc.dom[1])); lt.append('span').text(sc.tf(sc.dom[sc.dom.length-1]));
+  const lab = state.lens==='result' && !two()? R().cands[state.cand][1]+' share of ballots' : d3.select('#sel-lens option:checked').text();
+  L.append('span').text(lab + (DEMO[state.lens]? ' (tract estimate)':'') + (state.lens==='mailshare'?' (same in every view)':''));
+}
+
+/* ---------- dossier ---------- */
+function cityAvg(k){ const a=ids().filter(id=>DATA.demo[id]); return d3.sum(a,id=>DATA.demo[id][k]*R().p[id].reg)/d3.sum(a,id=>R().p[id].reg); }
+function renderDossier(id){
+  const D=d3.select('#dossier'); D.selectAll('*').remove(); const r=R();
+  if(!id){
+    D.append('div').attr('class','eyebrow').text(r.title);
+    D.append('h2').text('Pick a precinct');
+    D.append('p').attr('class','hint').text('Hover or tap any precinct on the map, a dot in the charts, or a row in the table to see how it voted in person and by mail, plus its neighborhood profile. Click to pin it.');
+    const all=ids().map(id=>({id, v:two()? net(id,'all') : arr(id,'all')[1+state.cand]}));
+    if(two()){
+      const best=d3.greatest(all,d=>d.v), worst=d3.least(all,d=>d.v);
+      D.append('p').attr('class','small').text(`Biggest net for ${r.cands[0][1]}: ${best.id} (${fmtS(best.v)}). Biggest net for ${r.cands[1][1]}: ${worst.v<0?worst.id+' ('+fmtS(-worst.v)+')':'none; '+r.cands[0][1]+' carried every precinct'}.`);
+    }
+    const t=totals('ip'), tm=totals('mail');
+    if(two()) D.append('p').attr('class','small').text(`Net from in-person ballots: ${r.cands[0][1]} ${fmtS(t[1]-t[2])}. Net from mail: ${fmtS(tm[1]-tm[2])}.`);
+    return;
+  }
+  const p=r.p[id], dm=DATA.demo[id];
+  const head=D.append('div').attr('class','dh');
+  head.append('h2').attr('class','mono').style('font-family','var(--f-mono)').style('font-size','1.3rem').text(id);
+  if(state.pin===id) head.append('button').attr('class','unpin').text('Unpin').on('click',()=>{ state.pin=null; applyHighlight(); renderDossier(null); });
+  const tags=D.append('div').attr('class','tags');
+  tags.append('span').attr('class','tag').text('Ballot group '+p.grp);
+  if(p.vbmOnly) tags.append('span').attr('class','tag').text('Mail-ballot precinct');
+  if(p.d2) tags.append('span').attr('class','tag').text('In Council District 2');
+  // rank
+  const rk = ids().map(i=>({i, v: two()? share(i,'all',0) : share(i,'all',state.cand)})).sort((a,b)=>b.v-a.v).findIndex(o=>o.i===id)+1;
+  tags.append('span').attr('class','tag').text(`#${rk} of ${ids().length} for ${two()?r.cands[0][1]:r.cands[state.cand][1]}`);
+  const kv=D.append('div').attr('class','kv');
+  [[fmtI(p.reg),'Registered'],[fmtI(p.all[0]),'Ballots'],[fmtP(100*p.all[0]/p.reg),'Turnout']].forEach(([a,b])=>{ const d=kv.append('div'); d.append('b').text(a); d.append('span').text(b); });
+  const kv2=D.append('div').attr('class','kv');
+  [[fmtI(p.ip[0]),'In-person'],[fmtI(p.mail[0]),'Mail'],[fmtP(100*p.mail[0]/p.all[0]),'By mail']].forEach(([a,b])=>{ const d=kv2.append('div'); d.append('b').text(a); d.append('span').text(b); });
+  D.append('h3').text(two()? 'Vote share, in-person vs mail' : 'Share of ballots, in-person vs mail');
+  const bars=D.append('div').attr('class','bars');
+  const maxv = two()? 100 : Math.max(...r.cands.map((c,i)=>Math.max(share(id,'ip',i),share(id,'mail',i))))*1.1;
+  r.cands.forEach((c,i)=>{
+    const row=bars.append('div').attr('class','brow');
+    row.append('span').attr('class','nm').style('color',candColor(i)).text(c[1]);
+    const tr=row.append('div').attr('class','btrack');
+    ['ip','mail'].forEach(m=>{ const l=tr.append('div').attr('class','bline').attr('title',MODES[m]); l.append('i').style('width',(100*share(id,m,i)/maxv)+'%').style('background', m==='ip'?'var(--ip)':'var(--mail)'); });
+    const vv=row.append('div').attr('class','bvals'); vv.append('div').text(fmtP(share(id,'ip',i)).replace('%','')); vv.append('div').text(fmtP(share(id,'mail',i)).replace('%',''));
+  });
+  D.append('div').attr('class','legend').call(s=>{ s.append('span').attr('class','toggle').html('').call(k=>{k.append('span').attr('class','dot').style('background','var(--ip)'); k.append('span').text('In-person');}); s.append('span').attr('class','toggle').call(k=>{k.append('span').attr('class','dot').style('background','var(--mail)'); k.append('span').text('Mail');}); });
+  if(two()){
+    const ni=net(id,'ip'), nm=net(id,'mail');
+    D.append('p').attr('class','small').text(`Net ${r.cands[0][1]}: ${fmtS(ni)} in-person, ${fmtS(nm)} by mail, ${fmtS(ni+nm)} total.`);
+  } else {
+    const a=p.all; const used=a[1]+a[2]+a[3];
+    D.append('p').attr('class','small').text(`${(used/a[0]).toFixed(2)} votes used per ballot (2 allowed). ${fmtI(2*a[0]-used)} votes left blank.`);
+  }
+  if(dm){
+    D.append('h3').text('Neighborhood profile');
+    const dd=D.append('div').attr('class','demo');
+    ['latino','black','asian','owner'].forEach(k=>{
+      const row=dd.append('div').attr('class','drow');
+      row.append('span').text(DEMO[k].label.replace(' residents','').replace(' households',''));
+      const l=row.append('div').attr('class','bline'); l.append('i').style('width',dm[k]+'%').style('background','var(--cA)');
+      l.append('span').attr('class','avg').style('left',cityAvg(k)+'%').attr('title','City average');
+      row.append('span').attr('class','mono').style('text-align','right').text(dm[k].toFixed(0)+'%');
+    });
+    const inc=dd.append('div').attr('class','drow'); inc.append('span').text('Median income'); const l=inc.append('div').attr('class','bline');
+    l.append('i').style('width',Math.min(100,dm.med_income/1200)+'%').style('background','var(--cA)'); l.append('span').attr('class','avg').style('left',(cityAvg('med_income')/1200)+'%');
+    inc.append('span').attr('class','mono').style('text-align','right').text(fmt$(dm.med_income));
+    D.append('p').attr('class','small muted').text('Census tracts '+dm.tracts.map(t=>t.slice(0,4)+'.'+t.slice(4)).join(', ')+'. Dark tick = '+(r.city==='sem'?'city':'city')+' average.');
+  }
+}
+
+/* ---------- highlight ---------- */
+function applyHighlight(){
+  const f = state.hover || state.pin;
+  d3.selectAll('path.pc').classed('hl', function(){ return this.dataset.id===f; }).classed('dim', function(){ return !!state.pin && this.dataset.id!==state.pin && this.dataset.id!==state.hover; });
+  d3.selectAll('circle.bub').classed('hl', function(){ return this.dataset.id===f; });
+  d3.selectAll('circle.pt').classed('hl', function(){ return this.dataset.id===f; }).attr('r', function(){ return this.dataset.id===f? +this.dataset.r+2 : +this.dataset.r; });
+  d3.selectAll('#tbl tbody tr').classed('hl', function(){ return this.dataset.id===f; });
+  d3.selectAll('path.pc.hl, circle.pt.hl').raise();
+}
+
+/* ---------- scatter helpers ---------- */
+function scatter(container, opt){
+  const el=d3.select(container); el.selectAll('*').remove();
+  const W=Math.max(300, el.node().clientWidth||520), H=Math.round(Math.min(420, W*0.8));
+  const m={t:14,r:16,b:44,l:52};
+  const svg=el.append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label',opt.aria);
+  const xs=opt.pts.map(p=>p.x), ys=opt.pts.map(p=>p.y);
+  const pad=(a,b)=>{ const d=(b-a)||1; return [a-d*.08,b+d*.08]; };
+  let xd=opt.xd||pad(d3.min(xs),d3.max(xs)), yd=opt.yd||pad(d3.min(ys),d3.max(ys));
+  const x=d3.scaleLinear(xd,[m.l,W-m.r]), y=d3.scaleLinear(yd,[H-m.b,m.t]);
+  svg.append('g').attr('class','grid').selectAll('line').data(y.ticks(5)).join('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',y).attr('y2',y);
+  svg.append('g').attr('class','axis').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(x).ticks(W<420?4:6).tickFormat(opt.xf));
+  svg.append('g').attr('class','axis').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickFormat(opt.yf));
+  svg.append('text').attr('x',(m.l+W-m.r)/2).attr('y',H-8).attr('text-anchor','middle').style('font','500 11px var(--f-body)').style('fill',css('--muted')).text(opt.xl);
+  svg.append('text').attr('transform',`translate(13,${(m.t+H-m.b)/2}) rotate(-90)`).attr('text-anchor','middle').style('font','500 11px var(--f-body)').style('fill',css('--muted')).text(opt.yl);
+  if(opt.under) opt.under(svg,x,y,m,W,H);
+  const rs=d3.scaleSqrt([0,d3.max(opt.pts,p=>p.w)],[2,15]);
+  svg.append('g').selectAll('circle').data(opt.pts.slice().sort((a,b)=>b.w-a.w)).join('circle').attr('class','pt')
+    .attr('data-id',p=>p.id).attr('data-r',p=>rs(p.w)).attr('cx',p=>x(p.x)).attr('cy',p=>y(p.y)).attr('r',p=>rs(p.w))
+    .style('fill',p=>p.c).style('fill-opacity',.85)
+    .on('pointerenter pointermove',(ev,p)=>{ state.hover=p.id; showTip(ev,p.id,'all'); applyHighlight(); if(!state.pin) renderDossier(p.id); })
+    .on('pointerleave',()=>{ state.hover=null; tip.attr('hidden',true); applyHighlight(); if(!state.pin) renderDossier(null); })
+    .on('click',(ev,p)=>{ state.pin = state.pin===p.id? null : p.id; applyHighlight(); renderDossier(state.pin||p.id); });
+  if(opt.over) opt.over(svg,x,y,m,W,H);
+}
+function wfit(pts){
+  const sw=d3.sum(pts,p=>p.w), mx=d3.sum(pts,p=>p.w*p.x)/sw, my=d3.sum(pts,p=>p.w*p.y)/sw;
+  const sxx=d3.sum(pts,p=>p.w*(p.x-mx)**2), syy=d3.sum(pts,p=>p.w*(p.y-my)**2), sxy=d3.sum(pts,p=>p.w*(p.x-mx)*(p.y-my));
+  return {r: sxy/Math.sqrt(sxx*syy), b: sxy/sxx, a: my - sxy/sxx*mx};
+}
+
+/* ---------- scatter 1: in-person vs mail ---------- */
+function renderSplit(){
+  const r=R(), c = two()?0:state.cand, nm=r.cands[c][1];
+  const pts=ids().map(id=>({id, x:share(id,'ip',c), y:share(id,'mail',c), w:R().p[id].all[0], c: two()? (net(id,'all')>=0?candColor(0):candColor(1)) : candColor(c)}));
+  const all=[...pts.map(p=>p.x),...pts.map(p=>p.y)]; const lo=Math.floor((d3.min(all)-3)/5)*5, hi=Math.ceil((d3.max(all)+3)/5)*5;
+  const above = pts.filter(p=>p.y>p.x).length;
+  d3.select('#split-desc').text(`${nm}'s ${two()?'vote share':'share of ballots'} among in-person voters (across) vs mail voters (up) in each precinct. Dots above the diagonal did better with mail; below, better in person. ${above} of ${pts.length} precincts sit above the line.`+(two()?' Dot color shows who carried the precinct.':''));
+  scatter('#ch-split',{pts, xd:[lo,hi], yd:[lo,hi], xf:v=>v+'%', yf:v=>v+'%', xl:'In-person voters', yl:'Mail voters', aria:'Scatter of in-person versus mail share by precinct',
+    under:(svg,x,y)=>{ svg.append('line').attr('x1',x(lo)).attr('y1',y(lo)).attr('x2',x(hi)).attr('y2',y(hi)).style('stroke',css('--line-strong')).style('stroke-dasharray','5 4');
+      if(two() && lo<50 && hi>50){ svg.append('line').attr('x1',x(50)).attr('x2',x(50)).attr('y1',y(lo)).attr('y2',y(hi)).style('stroke',css('--line')); svg.append('line').attr('y1',y(50)).attr('y2',y(50)).attr('x1',x(lo)).attr('x2',x(hi)).style('stroke',css('--line')); }
+      svg.append('text').attr('x',x(lo)+8).attr('y',y(hi)+16).style('font','500 10.5px var(--f-mono)').style('fill',css('--mail')).text('↑ stronger by mail');
+      svg.append('text').attr('x',x(hi)-8).attr('y',y(lo)-8).attr('text-anchor','end').style('font','500 10.5px var(--f-mono)').style('fill',css('--ip')).text('stronger in person →');
+    }});
+}
+
+/* ---------- scatter 2: demographics ---------- */
+function renderDemo(){
+  const yo=yOptions().find(o=>o.k===state.dy)||yOptions()[0], dx=DEMO[state.dx];
+  const pts=ids().filter(id=>DATA.demo[id]).map(id=>({id, x:DATA.demo[id][state.dx], y:yo.v(id), w:R().p[id].reg, c: css('--cA')}));
+  const fit=wfit(pts); const n=pts.length;
+  const strength = Math.abs(fit.r)>=.6?'strong':Math.abs(fit.r)>=.35?'moderate':Math.abs(fit.r)>=.15?'weak':'no clear';
+  d3.select('#rbadge').text('r = '+(fit.r>=0?'+':'−')+Math.abs(fit.r).toFixed(2));
+  d3.select('#rtext').text(`${strength} ${fit.r>=0?'positive':'negative'} relationship across ${n} precincts${n<10?' (very small sample)':''}.`);
+  scatter('#ch-demo',{pts, xf:dx.unit==='$'?(v=>'$'+Math.round(v/1000)+'k'):(v=>v+'%'), yf:v=>v+'%', xl:dx.label+' (tract est.)', yl:yo.label, aria:'Scatter of '+dx.label+' versus '+yo.label,
+    under:(svg,x,y)=>{ const [a,b]=x.domain(); svg.append('line').attr('x1',x(a)).attr('x2',x(b)).attr('y1',y(fit.a+fit.b*a)).attr('y2',y(fit.a+fit.b*b)).style('stroke',css('--ink')).style('stroke-width',1.5).style('opacity',.5); }});
+}
+
+/* ---------- table ---------- */
+function renderTable(){
+  const r=R(), t=d3.select('#tbl');
+  const cols=[{k:'id',l:'Precinct',f:v=>v,v:id=>id},{k:'reg',l:'Reg.',f:fmtI,v:id=>r.p[id].reg},{k:'bal',l:'Ballots',f:fmtI,v:id=>r.p[id].all[0]},{k:'to',l:'Turnout',f:fmtP,v:id=>turnout(id,'all')},{k:'mail',l:'Mail %',f:fmtP,v:id=>mailShare(id)}];
+  if(two()){
+    const a=r.cands[0][1];
+    cols.push({k:'sa',l:a,f:fmtP,v:id=>share(id,'all',0)},{k:'si',l:a+' in-person',f:fmtP,v:id=>share(id,'ip',0)},{k:'sm',l:a+' mail',f:fmtP,v:id=>share(id,'mail',0)},
+      {k:'ni',l:'Net in-person',f:fmtS,v:id=>net(id,'ip')},{k:'nm',l:'Net mail',f:fmtS,v:id=>net(id,'mail')},{k:'nt',l:'Net total',f:fmtS,v:id=>net(id,'all')});
+  } else {
+    r.cands.forEach((c,i)=>cols.push({k:'c'+i,l:c[1]+' % ballots',f:fmtP,v:id=>share(id,'all',i)}));
+    cols.push({k:'bi',l:r.cands[1][1]+' in-person',f:fmtP,v:id=>share(id,'ip',1)},{k:'bm',l:r.cands[1][1]+' mail',f:fmtP,v:id=>share(id,'mail',1)});
+  }
+  cols.push({k:'lat',l:'Latino',f:v=>v==null?'—':v.toFixed(0)+'%',v:id=>DATA.demo[id]&&DATA.demo[id].latino},{k:'blk',l:'Black',f:v=>v==null?'—':v.toFixed(0)+'%',v:id=>DATA.demo[id]&&DATA.demo[id].black},
+    {k:'asn',l:'Asian',f:v=>v==null?'—':v.toFixed(0)+'%',v:id=>DATA.demo[id]&&DATA.demo[id].asian},{k:'inc',l:'Income',f:v=>v==null?'—':fmt$(v),v:id=>DATA.demo[id]&&DATA.demo[id].med_income},{k:'own',l:'Owners',f:v=>v==null?'—':v.toFixed(0)+'%',v:id=>DATA.demo[id]&&DATA.demo[id].owner});
+  if(!cols.find(c=>c.k===state.sort.k)) state.sort={k:'reg',dir:-1};
+  const hr=t.select('thead').selectAll('tr').data([0]).join('tr');
+  hr.selectAll('th').data(cols,c=>c.k).join('th').attr('aria-sort',c=>c.k===state.sort.k?(state.sort.dir>0?'ascending':'descending'):'none')
+    .selectAll('button').data(c=>[c]).join('button').text(c=>c.l).attr('data-dir',c=>c.k===state.sort.k?(state.sort.dir>0?'▲':'▼'):null)
+    .on('click',(ev,c)=>{ state.sort = {k:c.k, dir: state.sort.k===c.k? -state.sort.dir : (c.k==='id'?1:-1)}; renderTable(); });
+  const sc=cols.find(c=>c.k===state.sort.k);
+  const rows=ids().slice().sort((a,b)=>{ const va=sc.v(a), vb=sc.v(b); return (va<vb?-1:va>vb?1:0)*state.sort.dir; });
+  const tr=t.select('tbody').selectAll('tr').data(rows,d=>d).join('tr').attr('data-id',d=>d).order()
+    .on('click',(ev,id)=>{ state.pin = state.pin===id? null : id; applyHighlight(); renderDossier(state.pin||id); document.getElementById('maps').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'center'}); })
+    .on('pointerenter',(ev,id)=>{ state.hover=id; applyHighlight(); })
+    .on('pointerleave',()=>{ state.hover=null; applyHighlight(); });
+  tr.selectAll('td').data(id=>cols.map(c=>({c,id}))).join('td').each(function(d){
+    const td=d3.select(this); td.selectAll('*').remove();
+    const v=d.c.v(d.id); const txt=d.c.f(v);
+    if(d.c.k==='id'){ const lead = two()? (net(d.id,'all')>=0?0:1) : null; if(lead!==null) td.append('span').attr('class','sw').style('background',candColor(lead)); td.append('span').attr('class','mono').text(txt); }
+    else td.text(txt);
+  });
+}
+
+/* ---------- render ---------- */
+function renderAll(){
+  d3.selectAll('#tabs .tab').attr('aria-selected',function(){ return this.dataset.race===state.race; });
+  d3.selectAll('#seg-mode button').attr('aria-pressed',function(){ return this.dataset.v===state.mode; });
+  d3.select('#chk-bub').property('checked',state.bub); d3.select('#chk-lab').property('checked',state.lab);
+  if(two()) state.cand = Math.min(state.cand, 1);
+  buildLensOptions();
+  [state.race].forEach(k=>d3.select('#find-'+k).property('hidden',k!==state.race));
+  renderScore(); renderMap(); renderDossier(state.pin); renderSplit(); renderDemo(); renderTable(); save();
+}
+renderAll();
+let rt; window.addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(()=>{ renderMap(); renderSplit(); renderDemo(); },150); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>renderAll());
+new MutationObserver(()=>renderAll()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+
+</body>
+</html>
